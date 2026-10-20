@@ -19,14 +19,16 @@ export function ButtonLink({
 export function Card({
   children,
   soft = false,
+  className = "",
 }: {
   children: ReactNode;
   soft?: boolean;
+  className?: string;
 }) {
-  return <section className={`card ${soft ? "soft" : ""}`}>{children}</section>;
+  return <section data-slot="card" className={`card ${soft ? "soft" : ""} ${className}`}>{children}</section>;
 }
 export function Badge({ children }: { children: ReactNode }) {
-  return <span className="badge">{children}</span>;
+  return <span data-slot="badge" className="badge">{children}</span>;
 }
 export function PageTitle({
   eyebrow,

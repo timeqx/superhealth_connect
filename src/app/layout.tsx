@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { AppHeader } from "@/shared/ui/app-header";
 export const metadata: Metadata = {
   title: "SuperHealth Connect",
   description:
@@ -15,22 +16,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <header className="site-header">
-          <div className="header-inner">
-            <Link className="brand" href="/">
-              ✚ SuperHealth Connect
-            </Link>
-            <nav className="navigation" aria-label="Main navigation">
-              <Link href="/patient">Overview</Link>
-              <Link href="/patient/appointments">Appointments</Link>
-              <Link href="/services">Services</Link>
-              <Link href="/patient/inquiries">Inquiries</Link>
-              <Link className="button secondary" href="/admin">
-                Staff portal
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <AppHeader />
         <main id="main" className="container">
           {children}
         </main>
@@ -40,6 +26,7 @@ export default function RootLayout({
             to center confirmation.
           </p>
           <Link href="/privacy">Privacy notice</Link>
+          <Link href="/admin">Staff portal</Link>
           <Link href="/preview/patient">Synthetic patient preview</Link>
           <Link href="/preview/admin">Synthetic staff preview</Link>
         </footer>
