@@ -9,7 +9,7 @@ Build a capstone appointment and queue website for Batasan Hills Super Health Ce
 ## Source map
 - TECHNICAL_BLUEPRINT.md: complete proposed specification and acceptance criteria.
 - FIGMA_DESIGN.md: Figma URL, 23 screen links, design tokens and implementation gaps.
-- ../SuperHealth-Connect-Flowchart.pdf: original website and research flows.
+- SuperHealth-Connect-Flowchart.pdf: original website and research flows.
 - ../AGENTS.md: concise instructions for coding agents.
 - IMPLEMENTATION_STATUS.md: starting checklist and continuing progress log.
 

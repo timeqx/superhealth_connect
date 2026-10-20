@@ -5,7 +5,7 @@ Read these before implementing:
 2. docs/TECHNICAL_BLUEPRINT.md — business rules, data model, architecture and acceptance criteria.
 3. docs/FIGMA_DESIGN.md — design references, tokens, screen map and prototype limitations.
 
-Use the existing root SuperHealth-Connect-Flowchart.pdf as the original requirements source. Render its image-based pages when needed; text extraction alone misses the flows.
+Use docs/SuperHealth-Connect-Flowchart.pdf as the original requirements source. Render its image-based pages when needed; text extraction alone misses the flows.
 
 ## Implementation rules
 - Build one responsive Next.js App Router + React + TypeScript application with Supabase Auth, PostgreSQL, private Storage and Realtime.
@@ -25,3 +25,13 @@ Use the existing root SuperHealth-Connect-Flowchart.pdf as the original requirem
 - Do not deploy or apply migrations to a live database as part of local implementation unless requested.
 
 There are no application commands guaranteed by this documentation handoff. Inspect package.json when one exists; add and document the project's commands during scaffolding.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
