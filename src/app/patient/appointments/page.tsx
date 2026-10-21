@@ -42,7 +42,7 @@ export default async function Appointments({ searchParams }: { searchParams: Pro
           return (
             <article className="visit-row" key={`${a.id}:${a.updated_at}`}>
               <div className="record-summary"><h2>{slot?.services?.name || "Your visit"}</h2><p>Reference {a.public_reference}</p></div>
-              <div>{slot?.starts_at && <><strong>{formatDate(slot.starts_at)}</strong><p>{formatTime(slot.starts_at)} · Philippine time</p></>}</div>
+              <div>{slot?.starts_at && <><strong>{formatDate(slot.starts_at)}</strong><p>{formatTime(slot.starts_at)} &middot; Philippine time</p></>}</div>
               <AppointmentStatusBadge status={a.status} />
               <div className="visit-actions">{["pending", "scheduled"].includes(a.status) && <ManageVisit id={a.id} expected={a.updated_at} asOf={new Date().toISOString()} />}</div>
               {a.decision_reason && <p className="notice visit-extra">{a.decision_reason}</p>}

@@ -12,11 +12,11 @@ export default async function StaffQueue() {
   ]);
   if (visits.error || sessions.error) throw new Error("Today's queue could not be loaded. Refresh to try again.");
   return <><PageTitle eyebrow="STAFF OPERATIONS" title="Arrivals & queue">{`${today} · Philippine time. Confirm arrival before issuing a ticket.`}</PageTitle>
-    <h2>Scheduled arrivals</h2><div className="grid-three">{visits.data.map(v => {
+    <div className="queue-layout"><section className="stack"><h2>Scheduled arrivals</h2><div className="arrival-list">{visits.data.map(v => {
       const slot = v.service_slots as unknown as { starts_at: string; services: { name: string } | null };
       return <Card key={v.id}><h3>{v.public_reference}</h3><p>{slot.services?.name} · {formatTime(slot.starts_at)}</p><QueueAction id={v.id} action="check_in" label="Check in patient" /></Card>;
     })}</div>{!visits.data.length && <p>No scheduled arrivals awaiting check-in today.</p>}
-    <h2>Service queues</h2>{sessions.data.map(q => {
+    </section><section className="stack"><h2>Service queues</h2>{sessions.data.map(q => {
       const service = q.services as unknown as { name: string } | null;
       const tickets = [...q.queue_tickets].sort((a,b) => a.order_sequence-b.order_sequence);
       const active = tickets.some(t => ["called", "serving"].includes(t.status));
@@ -25,5 +25,5 @@ export default async function StaffQueue() {
         {q.status === "open" && <div className="actions"><QueueAction key={`${q.id}:${tickets.map(t => `${t.id}-${t.status}`).join()}`} id={q.id} action="call_next" label="Call next" disabled={active || !tickets.some(t => t.status === "waiting")} /><QueueAction id={q.id} action="close" label="Close queue" disabled={unresolved} /></div>}
         {tickets.map(t => <div className="row" key={`${t.id}:${t.status}`}><strong>Q-{String(t.ticket_number).padStart(3,"0")}</strong><AppointmentStatusBadge status={t.status} />{q.status === "open" && <div className="actions">{t.status === "called" && <><QueueAction id={q.id} ticket={t.id} action="start" label="Start service" /><QueueAction id={q.id} ticket={t.id} action="skip" label="Skip ticket" /></>}{t.status === "serving" && <QueueAction id={q.id} ticket={t.id} action="complete" label="Complete visit" />}{t.status === "skipped" && <QueueAction id={q.id} ticket={t.id} action="requeue" label="Return to queue" />}</div>}</div>)}
       </Card>;
-    })}{!sessions.data.length && <p>Queues appear after the first staff check-in.</p>}</>;
+    })}{!sessions.data.length && <p>Queues appear after the first staff check-in.</p>}</section></div></>;
 }

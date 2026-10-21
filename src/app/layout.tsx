@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppHeader } from "@/shared/ui/app-header";
 import { SessionHeader } from "@/shared/ui/session-header";
 import { Suspense } from "react";
+import { SnackbarProvider } from "@/shared/ui/snackbar";
 export const metadata: Metadata = {
   title: "SuperHealth Connect",
   description:
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SnackbarProvider>
         <a className="skip-link" href="#main">
           Skip to content
         </a>
@@ -34,6 +36,7 @@ export default function RootLayout({
           <Link href="/preview/patient">Synthetic patient preview</Link>
           <Link href="/preview/admin">Synthetic staff preview</Link>
         </footer>
+        </SnackbarProvider>
       </body>
     </html>
   );

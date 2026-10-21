@@ -1,4 +1,5 @@
 "use client";
+import { useSnackbar } from "@/shared/ui/snackbar";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveOperations } from "./actions";
@@ -9,10 +10,10 @@ export type Service = { id: string; name: string; requirements: string; arrival_
 export type Slot = { id: string; service_id: string; starts_at: string; ends_at: string; capacity: number; is_open: boolean; updated_at: string };
 export function OperationsForm({ service, slot, services }: { service?: Service; slot?: Slot; services?: Service[] }) {
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState("");
+  const notify = useSnackbar();
   const retry = useRef({ payload: "", key: "" });
   const router = useRouter();
-  return <form className="stack" onSubmit={async event => {
+  return <form className="operations-form" onSubmit={async event => {
     event.preventDefault(); if (pending) return;
     const form = event.currentTarget;
     const data = new FormData(form);
@@ -23,17 +24,17 @@ export function OperationsForm({ service, slot, services }: { service?: Service;
     setPending(true);
     try {
       const result = await saveOperations(service ? "service" : "slot", { ...payload, key: retry.current.key });
-      setMessage(result.message);
+      notify(result.message, !result.ok);
       if (result.ok) { retry.current = { payload: "", key: "" }; if (!service && !slot) form.reset(); router.refresh(); }
-    } catch { setMessage("Connection interrupted. Retry to confirm the result."); }
+    } catch { notify("Connection interrupted. Retry to confirm the result.", true); }
     finally { setPending(false); }
   }}>
-    <fieldset disabled={pending} className="stack">
-      {service ? <><label>Patient requirements<Textarea name="requirements" defaultValue={service.requirements} required maxLength={2000} /></label><label>Arrival minutes before session<Input name="arrival" type="number" min={0} max={240} defaultValue={service.arrival_minutes} required /></label><label><input type="checkbox" name="published" defaultChecked={service.is_published} /> Published in service directory</label><label><input type="checkbox" name="bookable" defaultChecked={service.is_bookable} /> Accept online bookings</label></> : <>
+    <fieldset disabled={pending} className="form-grid">
+      {service ? <><label>Patient requirements<Textarea name="requirements" defaultValue={service.requirements} required maxLength={2000} /></label><label>Arrival minutes before session<Input name="arrival" type="number" min={0} max={240} defaultValue={service.arrival_minutes} required /></label><label className="checkbox-field"><input type="checkbox" name="published" defaultChecked={service.is_published} /> Published in service directory</label><label className="checkbox-field"><input type="checkbox" name="bookable" defaultChecked={service.is_bookable} /> Accept online bookings</label></> : <>
         {!slot && <><label>Service<select name="service" required>{services?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label>Start · Manila time<Input name="start" type="datetime-local" required /></label><label>End · Manila time<Input name="end" type="datetime-local" required /></label></>}
-        <label>Capacity<Input type="number" name="capacity" min={1} max={500} defaultValue={slot?.capacity ?? 10} required /></label><label><input name="open" type="checkbox" defaultChecked={slot?.is_open ?? false} /> Open for requests</label>
+        <label>Capacity<Input type="number" name="capacity" min={1} max={500} defaultValue={slot?.capacity ?? 10} required /></label><label className="checkbox-field"><input name="open" type="checkbox" defaultChecked={slot?.is_open ?? false} /> Open for requests</label>
       </>}
       <Button type="submit">{pending ? "Saving…" : service ? "Save service" : slot ? "Save session" : "Create session"}</Button>
-    </fieldset><p role="status">{message}</p>
+    </fieldset>
   </form>;
 }

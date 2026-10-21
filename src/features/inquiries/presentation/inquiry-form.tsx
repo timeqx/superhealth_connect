@@ -1,4 +1,5 @@
 "use client";
+import { useSnackbar } from "@/shared/ui/snackbar";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { sendInquiry } from "@/server/actions";
@@ -11,7 +12,7 @@ export function InquiryForm() {
   } = useForm({
     defaultValues: { subject: "", category: "General", body: "" },
   });
-  const [message, setMessage] = useState("");
+  const notify = useSnackbar();
   const [request, setRequest] = useState<{
     payload: string;
     key: string;
@@ -26,12 +27,14 @@ export function InquiryForm() {
             ? request
             : { payload, key: crypto.randomUUID() };
         setRequest(attempt);
+        try {
         const result = await sendInquiry({ ...values, key: attempt.key });
-        setMessage(result.message);
+        notify(result.message, !result.ok);
         if (result.ok) {
           reset();
           setRequest(null);
         }
+        } catch { notify("Connection interrupted. Retry unchanged to confirm your inquiry.", true); }
       })}
     >
       <label className="field">
@@ -56,11 +59,6 @@ export function InquiryForm() {
         <textarea required maxLength={4000} {...register("body")} />
       </label>
       <p>Do not include medical records or identity document numbers.</p>
-      {message && (
-        <p role="status" className="notice">
-          {message}
-        </p>
-      )}
       <button className="button" disabled={isSubmitting}>
         {isSubmitting ? "Sending…" : "Send inquiry"}
       </button>

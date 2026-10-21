@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useSnackbar } from "@/shared/ui/snackbar";
 import { useForm } from "react-hook-form";
 import { authenticate } from "../application/auth-actions";
 import { Button } from "@/shared/ui/button";
@@ -14,16 +14,19 @@ export function AuthForm({
     handleSubmit,
     formState: { isSubmitting },
   } = useForm({ defaultValues: { email: "", password: "", consent: false } });
-  const [message, setMessage] = useState("");
-  const [ok, setOk] = useState(false);
+  const notify = useSnackbar();
   return (
     <form
       className="form"
       onSubmit={handleSubmit(async (values) => {
-        const result = await authenticate(mode, values);
-        setMessage(result.message);
-        setOk(result.ok);
-        if (result.redirectTo) window.location.assign(result.redirectTo);
+        try {
+          const result = await authenticate(mode, values);
+          notify(result.message, !result.ok);
+          if (result.redirectTo) {
+            try { sessionStorage.setItem("auth-feedback", mode === "reset" ? "password-updated" : "signed-in"); } catch { /* Storage may be disabled. */ }
+            window.location.assign(result.redirectTo);
+          }
+        } catch { notify("Unable to connect. Please try signing in again.", true); }
       })}
     >
       {mode !== "reset" && (
@@ -63,11 +66,6 @@ export function AuthForm({
           I have read the <a href="/privacy">development privacy notice</a> and
           will use synthetic information.
         </label>
-      )}
-      {message && (
-        <p role={ok ? "status" : "alert"} className={ok ? "notice" : "error"}>
-          {message}
-        </p>
       )}
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting

@@ -1,3 +1,4 @@
+import { ConversationMessage } from "@/features/inquiries/presentation/conversation-message";
 import { requireActor } from "@/server/session";
 import { InquiryForm } from "@/features/inquiries/presentation/inquiry-form";
 import { Card, PageTitle } from "@/shared/ui/components";
@@ -8,7 +9,7 @@ export default async function Inquiries() {
   const { client, user } = await requireActor();
   const { data, error } = await client
     .from("inquiries")
-    .select("id,subject,status,inquiry_messages(id,body,is_draft,created_at)")
+    .select("id,subject,status,inquiry_messages(id,author_id,body,is_draft,created_at)")
     .eq("patient_id", user.id)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -32,7 +33,7 @@ export default async function Inquiries() {
               <AppointmentStatusBadge status={i.status} />
               <DetailDialog title={i.subject} description="Your messages and published staff replies, oldest first." label="View conversation">
                 <AppointmentStatusBadge status={i.status} />
-                {messages.map(m => <p className="inquiry-message" key={m.id}>{m.body}</p>)}
+                {messages.map(m => <ConversationMessage key={m.id} name={m.author_id === user.id ? "You" : "Health center staff"} staff={m.author_id !== user.id} createdAt={m.created_at}>{m.body}</ConversationMessage>)}
                 <InquiryReply id={i.id} />
               </DetailDialog>
             </Card>;

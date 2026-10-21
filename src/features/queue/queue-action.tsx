@@ -1,4 +1,5 @@
 "use client";
+import { useSnackbar } from "@/shared/ui/snackbar";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { queueOperation } from "./actions";
@@ -10,7 +11,7 @@ export function QueueAction({ id, action, ticket, label, disabled = false }: { i
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [reason, setReason] = useState("");
-  const [message, setMessage] = useState("");
+  const notify = useSnackbar();
   const [saved, setSaved] = useState(false);
   const lock = useRef(false);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
@@ -20,11 +21,11 @@ export function QueueAction({ id, action, ticket, label, disabled = false }: { i
     const input = { id, action, ticket, ...(action === "check_in" ? { reason } : {}) };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
-    try { const result = await queueOperation({ ...input, key: attempt.current.key }); setMessage(result.message); if (result.ok) { setSaved(true); router.refresh(); } }
-    catch { setMessage("Connection interrupted. Retry this action to check whether it was saved."); }
+    try { const result = await queueOperation({ ...input, key: attempt.current.key }); notify(result.message, !result.ok); if (result.ok) { setSaved(true); router.refresh(); } }
+    catch { notify("Connection interrupted. Retry this action to check whether it was saved."); }
     finally { lock.current = false; setPending(false); }
   }
-  return <div className="stack"><Button variant={action === "skip" || action === "close" ? "outline" : "default"} disabled={pending || saved || disabled} onClick={() => setOpen(true)}>{pending ? "Saving…" : label}</Button>{message && <p role="status" className="notice">{message}</p>}
+  return <div className="stack"><Button variant={action === "skip" || action === "close" ? "outline" : "default"} disabled={pending || saved || disabled} onClick={() => setOpen(true)}>{pending ? "Saving…" : label}</Button>
     <AlertDialog open={open} onOpenChange={setOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{label}?</AlertDialogTitle><AlertDialogDescription>{action === "check_in" ? "Confirm the patient has arrived. Staff check-in issues their queue ticket. For arrival outside the normal window, explain the override below; the service date must still be today." : "Confirm this change to the live queue. The server checks the latest state before applying it."}</AlertDialogDescription></AlertDialogHeader>
       {action === "check_in" && <label className="field">Arrival override reason (only when needed)<Textarea value={reason} maxLength={1000} onChange={e => setReason(e.target.value)} /></label>}
       <AlertDialogFooter><AlertDialogCancel>Go back</AlertDialogCancel><AlertDialogAction onClick={() => void submit()}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

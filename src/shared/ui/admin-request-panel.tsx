@@ -87,6 +87,8 @@ export function RequestTable({
             <thead>
               <tr>
                 <th scope="col">Reference</th>
+                <th scope="col">Patient / service</th>
+                <th scope="col">Session</th>
                 <th scope="col">Status</th>
                 <th scope="col">Details</th>
               </tr>
@@ -97,6 +99,8 @@ export function RequestTable({
                   <td>
                     <strong>{r.public_reference}</strong>
                   </td>
+                  <td><strong>{r.patientName || "Patient"}</strong><p>{r.serviceName || "Service details in review"}</p></td>
+                  <td>{r.startsAt ? <><strong>{formatDate(r.startsAt)}</strong><p>{formatTime(r.startsAt)}</p></> : "See details"}</td>
                   <td>
                     <AppointmentStatusBadge status={r.status} />
                   </td>

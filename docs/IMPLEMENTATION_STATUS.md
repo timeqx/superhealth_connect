@@ -388,3 +388,48 @@ end-to-end acceptance. The application is still partial, not pilot-ready.
   real concurrent connections, actual Realtime reconnects and provider delivery
   therefore remain unverified. Mock provider tests do not prove inbox delivery or
   database worker leasing under concurrency. No hosted migration or email was sent.
+
+## Compact workspace layouts — 21 October 2026
+- Patient appointments now use compact responsive rows with date, reference, status
+  and management actions. Filtering and booking sit together above the list.
+  Alternative-session notices and active queue details remain available.
+- Patient and staff inquiries use summary rows and accessible conversation modals
+  with existing reply/draft controls. Published patient messages are ordered by
+  creation time; private drafts remain excluded from patient content.
+- Profile details and private verification upload sit side by side above 800px;
+  narrower screens stack the sections. Existing visual tokens are retained.
+- Passed: typecheck, 21 unit tests and production build. An initial build found
+  a source encoding error introduced during editing; corrected before the passing build.
+- Authenticated browser checks are blocked by missing E2E_SUPABASE_URL for an
+  isolated local instance. These layouts and modal interactions have not been
+  browser-verified. Figma visual fidelity has not been verified for this change.
+- Full ESLint check also passed.
+
+## Staff workspace density and feedback — 21 October 2026
+- Added Sessions / Services tabs with keyboard navigation and preserved form state
+  when switching tabs. Session creation and upcoming sessions use desktop columns;
+  service definition and availability settings sit side by side. Operational fields
+  use two columns and checkboxes have bounded 18px controls with clickable labels.
+- Reports now have horizontal date filters, side-by-side outcome/duration cards
+  and a compact metric grid. History uses summary rows with visit-detail dialogs.
+  Arrivals and queues sit side by side; requests include patient/service/session
+  columns. Layouts collapse for smaller screens.
+- Conversation messages show sender names where available, patient/staff labels,
+  Manila timestamps and explicit private-draft labels. Sender names are loaded
+  using the existing staff-authorized profile query; patient views do not fetch
+  staff profiles. Existing draft isolation and server authorization remain intact.
+- Added shared bottom-left Radix snackbars with a seven-second timeout, manual
+  dismissal and built-in hover/focus pause. Auth, inquiry sends/replies, schedule
+  settings, appointment decisions, history actions and queue actions use them.
+  Generic sign-in/password-update feedback survives the full-page redirect.
+- Passed: full lint, TypeScript, 21 unit tests, final production build, diff check,
+  and 12 selected browser checks across 360/390/768/1440px. Browser checks cover
+  public/preview overflow, request-panel keyboard behavior, snackbar positioning,
+  automatic dismissal and manual close. Used installed Chrome after bundled
+  Playwright Chromium was missing. Screenshot capture emitted caret-style hydration
+  warnings during the run; all selected checks passed.
+- Updated authenticated inquiry tests for modal access, sender labels and private
+  draft editing. Execution remains blocked by missing E2E_SUPABASE_URL for an
+  isolated local instance. Private staff layouts, sender queries and successful
+  authenticated action feedback still need browser acceptance. Figma fidelity
+  remains unverified. No migration or live database mutation was performed.

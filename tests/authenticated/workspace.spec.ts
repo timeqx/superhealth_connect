@@ -37,19 +37,22 @@ test("patient authorization, inquiry response, notification and staff workspace"
     expect(await exported.text()).toContain("total_requests");
     expect((await staff.request.get("/admin/reports/export?from=2026-02-30&to=2026-03-01")).status()).toBe(400);
     await staff.goto("/admin/inquiries");
-    const thread = staff.locator(".card").filter({ has: staff.getByRole("heading", { name: subject, exact: true }) });
+    await staff.getByRole("button", { name: `View conversation: ${subject}`, exact: true }).click();
+    const thread = staff.getByRole("dialog", { name: subject, exact: true });
+    await expect(thread.locator('[data-sender="patient"]')).toContainText("Patient");
     await thread.getByLabel("Staff response").fill("Synthetic private draft");
     await thread.getByRole("button", { name: "Save private draft" }).click();
-    await expect(thread.getByText("Private draft ·", { exact: false })).toBeVisible();
+    await expect(thread.getByText("Private draft", { exact: false })).toBeVisible();
     await patient.reload();
     await expect(patient.getByText("Synthetic private draft", { exact: false })).toHaveCount(0);
     // Edit and publish the saved draft itself rather than creating another reply.
-    const savedDraft = thread.locator(".inquiry-message").filter({ hasText: "Private draft" });
+    const savedDraft = thread.locator(".conversation-message").filter({ hasText: "Private draft" });
     await savedDraft.getByLabel("Staff response").fill(`Synthetic reply to ${subject}`);
     await savedDraft.getByRole("button", { name: "Send reply", exact: true }).click();
     await expect(thread.getByText(`Synthetic reply to ${subject}`, { exact: true })).toBeVisible();
     await patient.reload();
-    await expect(patient.getByText(`Synthetic reply to ${subject}`, { exact: true })).toBeVisible();
+    await patient.getByRole("button", { name: `View conversation: ${subject}`, exact: true }).click();
+    await expect(patient.getByRole("dialog").locator('[data-sender="staff"]')).toContainText(`Synthetic reply to ${subject}`);
     await patient.goto("/patient/notifications");
     const unread = patient.getByRole("button", { name: "Mark as read", exact: true });
     const before = await unread.count();

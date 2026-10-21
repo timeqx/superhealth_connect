@@ -73,7 +73,14 @@ test("sign in reports missing configuration without inventing a session", async 
   await page.getByLabel("Email address").fill("synthetic@example.invalid");
   await page.getByLabel("Password", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.locator("form").getByRole("alert")).toContainText(
-    "not connected",
-  );
+  const snackbar = page.locator(".snackbar");
+  await expect(snackbar).toContainText("not connected");
+  const bounds = await snackbar.boundingBox();
+  expect(bounds!.x).toBeLessThan(50);
+  expect(bounds!.y).toBeGreaterThan(page.viewportSize()!.height / 2);
+  await expect(snackbar).not.toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(snackbar).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await expect(snackbar).not.toBeVisible();
 });
