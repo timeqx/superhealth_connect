@@ -27,9 +27,10 @@ export function PatientQueue({ id }: { id: string }) {
     const interval = setInterval(visibleRefresh, 15000);
     document.addEventListener("visibilitychange", visibleRefresh);
     window.addEventListener("online", visibleRefresh);
-    return () => { clearTimeout(initial); clearInterval(interval); current.current?.abort(); document.removeEventListener("visibilitychange", visibleRefresh); window.removeEventListener("online", visibleRefresh); };
+    window.addEventListener("care-update", visibleRefresh);
+    return () => { clearTimeout(initial); clearInterval(interval); current.current?.abort(); document.removeEventListener("visibilitychange", visibleRefresh); window.removeEventListener("online", visibleRefresh); window.removeEventListener("care-update", visibleRefresh); };
   }, [refresh]);
   return <section className="card"><h3>Your queue</h3>{snapshot && <><AppointmentStatusBadge status={snapshot.status} /><strong className="ticket">Q-{String(snapshot.ticket_number).padStart(3,"0")}</strong><p>{snapshot.service}</p>{!error && snapshot.status === "waiting" && <p>{snapshot.people_ahead} people ahead</p>}{snapshot.status === "called" && <p>Please proceed to the service desk.</p>}{snapshot.status === "skipped" && <p>Please ask staff to return you to the queue.</p>}<small>Last checked {formatTime(snapshot.fetched_at)}</small></>}
-    <div role="status">{error ? <p className="notice">{error} Any displayed ticket is the last known state.</p> : !snapshot ? <p>{pending ? "Loading your ticket…" : "No ticket issued yet."}</p> : null}</div>
+    <div role="status">{error ? <p className="notice">{error} Any displayed ticket is the last known state.</p> : !snapshot ? pending ? <div className="skeleton h-24 w-full" aria-label="Loading your ticket" /> : <p>No ticket issued yet.</p> : null}</div>
     <p className="caption">Updates every 15 seconds while this page is visible. No exact wait-time estimate.</p><Button variant="outline" disabled={pending} onClick={() => void refresh()}>{pending ? "Refreshing…" : "Refresh queue"}</Button></section>;
 }

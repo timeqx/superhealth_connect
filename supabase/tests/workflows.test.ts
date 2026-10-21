@@ -203,6 +203,38 @@ describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integr
       ).rows[0].status,
     ).toBe("completed");
   });
+  it("guards schedule edits, replays creation, and rejects stale updates", async () => {
+    await actor(a);
+    await expect(db.query("select public.update_service($1,true,true,'Synthetic requirements',15)", [service])).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    const key = "80000000-0000-4000-8000-000000000001";
+    const args = [service, "2099-01-01T09:00:00+08:00", "2099-01-01T10:00:00+08:00", key];
+    const sql = "select public.save_slot(null,$1,$2,$3,2,true,null,$4) as value";
+    const first = await db.query<{value: {id: string; updated_at: string}}>(sql, args);
+    const replay = await db.query<{value: {id: string}}>(sql, args);
+    expect(first.rows[0].value.id).toBe(replay.rows[0].value.id);
+    const id = first.rows[0].value.id;
+    for (const [user, key] of [[a,"002"],[b,"003"]]) {
+      await actor(user);
+      await db.query("select public.request_appointment($1,$2)", [id, `80000000-0000-4000-8000-000000000${key}`]);
+    }
+    await actor(staff);
+    await expect(db.query("select public.save_slot($1,$2,$3,$4,1,true,$5,$6)", [id, ...args.slice(0,3), first.rows[0].value.updated_at, "80000000-0000-4000-8000-000000000004"])).rejects.toThrow("SLOT_FULL");
+    await expect(db.query("select public.save_slot($1,$2,$3,$4,2,false,'2000-01-01',$5)", [id, ...args.slice(0,3), "80000000-0000-4000-8000-000000000005"])).rejects.toThrow("CONFLICT");
+  });
+  it("isolates notifications and makes read acknowledgement retry-safe", async () => {
+    await actor(a);
+    const {rows} = await db.query<{id: string}>("select id from public.notifications limit 1");
+    expect(rows).toHaveLength(1);
+    const id = rows[0].id;
+    await actor(b);
+    expect((await db.query("select id from public.notifications where id=$1", [id])).rows).toHaveLength(0);
+    await expect(db.query("select public.mark_notification_read($1)", [id])).rejects.toThrow("FORBIDDEN");
+    await actor(a);
+    await db.query("select public.mark_notification_read($1)", [id]);
+    await db.query("select public.mark_notification_read($1)", [id]);
+    expect((await db.query<{read_at: string}>("select read_at from public.notifications where id=$1", [id])).rows[0].read_at).toBeTruthy();
+  });
   it("keeps inquiry drafts staff-only and publishes replies to the owner", async () => {
     await actor(a);
     const { rows } = await db.query<{ value: { id: string } }>(

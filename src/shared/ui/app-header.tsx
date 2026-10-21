@@ -18,6 +18,7 @@ const patientLinks = [
   ["/services", "Services"],
   ["/patient/inquiries", "Inquiries"],
   ["/patient/profile", "Profile"],
+  ["/patient/notifications", "Notifications"],
 ];
 export function AppHeader({ role = null, pending = false, unavailable = false }: {
   role?: "patient" | "admin" | null;
@@ -35,7 +36,7 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
     : preview
     ? [["/preview/patient", "Patient overview"], ["/preview/booking", "Booking flow"], ["/preview/queue", "Patient queue"], ["/preview/admin", "Staff preview"]]
     : pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
-    ? [["/admin", "Appointment requests"], ["/admin/queue", "Arrivals & queue"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Account reviews"]]
+    ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
     : [["/services", "Services"], ["/patient/book", "Book a visit"]];
   const accountAction = role ? (
     <form action={signOut}><Button type="submit" variant="ghost">Sign out</Button></form>

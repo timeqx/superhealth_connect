@@ -123,9 +123,20 @@ checks remain outstanding. `/preview/admin` remains a read-only decision preview
 - Patients can cancel or request a different session from **Manage appointment**.
 - Staff use `/admin/queue` for arrivals, check-in and service queue transitions.
 - Checked-in patients see their own queue on `/patient/appointments`, refreshed
-  every 15 seconds while visible (polling; Realtime is still pending).
+  every 15 seconds while visible, with immediate refresh on their own notification events.
 - Staff use `/admin/inquiries` for private drafts and published replies; patients
   can follow up from their inquiry threads.
 These adapters use existing database functions; signed-in browser and hosted
 acceptance testing remains outstanding. See IMPLEMENTATION_STATUS.md for all
 remaining MVP work; these changes do not finish the whole application.
+
+## Operations continuation
+
+Staff services/schedules are at `/admin/schedules`; request reports and recent
+audit activity are at `/admin/reports`. Patient notifications are at
+`/patient/notifications`, with private Realtime refresh and polling fallback.
+
+See [operations setup](docs/OPERATIONS.md) for the notification email worker
+(`npm run email:worker`, read-only by default), its required credentials, and the
+isolated authenticated browser runner (`npm run test:e2e:auth`). These require
+external/local setup before delivery and authenticated acceptance can be verified.

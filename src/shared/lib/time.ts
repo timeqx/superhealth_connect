@@ -28,5 +28,8 @@ export function manilaInputToUtc(value: string) {
     throw new Error("VALIDATION_ERROR");
   const date = new Date(`${value}:00+08:00`);
   if (Number.isNaN(date.getTime())) throw new Error("VALIDATION_ERROR");
+  // Date normalizes impossible calendar dates (e.g. February 30); reject them.
+  if (new Date(date.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16) !== value)
+    throw new Error("VALIDATION_ERROR");
   return date.toISOString();
 }

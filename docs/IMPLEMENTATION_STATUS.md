@@ -292,3 +292,37 @@ email outbox worker/provider, Realtime subscription/reconnect acceptance, histor
 reports/audit UI, pagination beyond bounded staff lists, no-show controls,
 operational policy approval, multi-connection race tests and complete authenticated
 end-to-end acceptance. The application is still partial, not pilot-ready.
+
+## Operations, notifications and delivery continuation — 21 October 2026
+- Added staff services/schedules management: publish/bookable controls, requirements,
+  arrival rules, session creation, capacity/open edits, confirmation, retry keys,
+  exact version timestamps and upcoming-session pagination using existing RPCs.
+- Added paginated own-account notification inbox and read acknowledgements.
+  Patient layouts subscribe to RLS-protected own notifications, refresh on reconnect
+  and visibility, and poll every minute. Own queue polling remains every 15 seconds.
+  Queue initial loading now uses a minimal skeleton. Header includes the new pages
+  and switches to its menu earlier to avoid overflowing navigation.
+- Added staff reports with exact status counts, explicit cohort dates/denominators
+  and limited audit activity. Duration statistics and export remain pending.
+- Added bounded Resend outbox worker: read-only default, explicit send mode,
+  atomic claims/leases, stable provider idempotency key, bounded retry window,
+  recipient eligibility, generic private-account links and sanitized error codes.
+  Provider acceptance is recorded separately from actual inbox delivery; no email
+  was sent, scheduler installed or hosted database modified.
+- Added local-only authenticated Playwright configuration and a synthetic
+  sign-in/authorization/inquiry/notification journey. It does not apply migrations.
+- Passed: TypeScript, targeted ESLint, 9 embedded PostgreSQL workflow tests,
+  including new capacity/stale-session/idempotency and notification-isolation checks.
+- Blocked: authenticated Playwright configuration refuses execution because
+  E2E_SUPABASE_URL/local synthetic accounts are not configured. No local Supabase
+  CLI or Docker command was found. Current app configuration points to hosted
+  Supabase; TEST_DATABASE_URL, EMAIL_DATABASE_URL and RESEND_API_KEY are absent.
+- Not verified: new page browser behavior, actual Realtime events/reconnect,
+  provider delivery, email worker crash/concurrency behavior, or full production
+  build. No full suite was rerun. Figma fidelity for these added screens is unverified;
+  they extend existing shared UI and documented design tokens.
+- See OPERATIONS.md for setup and limits. Remaining acceptance includes booking/
+  approval/check-in E2E, private uploads/review, multi-connection races, email failure/
+  recovery and deliverability. Other unfinished UI includes no-show controls,
+  pagination of older staff lists, editing existing inquiry drafts and expanded
+  reporting. The app is not yet pilot-ready.
