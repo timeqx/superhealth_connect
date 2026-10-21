@@ -48,6 +48,7 @@ test("responsive screens do not overflow", async ({ page }) => {
     "/preview/patient",
     "/preview/admin",
     "/preview/queue",
+    "/preview/booking",
   ]) {
     await page.goto(path);
     expect(
@@ -55,11 +56,14 @@ test("responsive screens do not overflow", async ({ page }) => {
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBe(true);
-    if (path === "/")
-      await page.screenshot({
-        path: test.info().outputPath("landing.png"),
-        fullPage: true,
-      });
+    await page.screenshot({
+      path: test
+        .info()
+        .outputPath(
+          path === "/" ? "landing.png" : `${path.replaceAll("/", "-")}.png`,
+        ),
+      fullPage: true,
+    });
   }
 });
 test("sign in reports missing configuration without inventing a session", async ({

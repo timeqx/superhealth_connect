@@ -5,6 +5,7 @@ import {
 import { supabaseConfig } from "@/shared/supabase/config";
 import { serverClient } from "@/shared/supabase/server";
 import { Badge, ButtonLink, Card, PageTitle } from "@/shared/ui/components";
+import { ServiceCard } from "@/shared/ui/care-components";
 export default async function Services() {
   const configured = Boolean(supabaseConfig());
   let services: Service[] = sampleCatalog;
@@ -29,20 +30,23 @@ export default async function Services() {
         </p>
       )}
       <div className="grid-three">
-        {services.map((s) => (
-          <Card key={s.id}>
+        {services.map((s, index) => (
+          <ServiceCard
+            key={s.id}
+            name={s.name}
+            description={s.description}
+            index={index}
+          >
             <Badge>
               {s.is_bookable ? "BOOKING OPEN" : "NOT OPEN FOR BOOKING"}
             </Badge>
-            <h2>{s.name}</h2>
-            <p>{s.description}</p>
             <p>{s.requirements}</p>
             {s.is_bookable && (
               <ButtonLink href={`/patient/book?service=${s.id}`}>
                 Choose service →
               </ButtonLink>
             )}
-          </Card>
+          </ServiceCard>
         ))}
       </div>
       {services.length === 0 && (

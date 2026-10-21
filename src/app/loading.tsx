@@ -1,7 +1,1 @@
-export default function Loading() {
-  return (
-    <p role="status" className="notice">
-      Loading your page…
-    </p>
-  );
-}
+export { PageSkeleton as default } from "@/shared/ui/skeleton";

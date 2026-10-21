@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { AppHeader } from "@/shared/ui/app-header";
+import { SessionHeader } from "@/shared/ui/session-header";
+import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "SuperHealth Connect",
   description:
@@ -16,7 +18,9 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <AppHeader />
+        <Suspense fallback={<AppHeader pending />}>
+          <SessionHeader />
+        </Suspense>
         <main id="main" className="container">
           {children}
         </main>

@@ -2,6 +2,7 @@ import { requireActor } from "@/server/session";
 import { Card, PageTitle } from "@/shared/ui/components";
 import { Button } from "@/shared/ui/button";
 import { ReviewPanel } from "@/features/accounts/presentation/review-panel";
+import { AdminRequestPanel } from "@/shared/ui/admin-request-panel";
 export default async function Reviews() {
   const { client } = await requireActor(true);
   const { data, error } = await client
@@ -19,27 +20,32 @@ export default async function Reviews() {
         Review the submitted version before making a decision. Oldest
         submissions appear first.
       </PageTitle>
-      <div className="grid-three">
+      <div className="review-list">
         {data.map((p) => (
           <Card key={p.id}>
-            <h2>
-              {p.first_name} {p.middle_name} {p.last_name}
-            </h2>
-            <p>
-              {p.barangay_code === "Others"
-                ? p.other_barangay
-                : p.barangay_code}
-            </p>
-            <p>Submission version {p.review_version}</p>
+            <div className="review-identity">
+              <h2>
+                {p.first_name} {p.middle_name} {p.last_name}
+              </h2>
+              <p>
+                {p.barangay_code === "Others"
+                  ? p.other_barangay
+                  : p.barangay_code}
+              </p>
+            </div>
+            <p className="caption">Submission version {p.review_version}</p>
             {p.current_document_id ? (
-              <>
+              <AdminRequestPanel
+                title={`${p.first_name} ${p.last_name}`}
+                description={`Private verification · Submission version ${p.review_version}`}
+              >
                 <Button asChild variant="outline">
                   <a href={`/admin/reviews/document/${p.current_document_id}`}>
                     Open private document
                   </a>
                 </Button>
                 <ReviewPanel user={p.id} document={p.current_document_id} />
-              </>
+              </AdminRequestPanel>
             ) : (
               <p className="notice">
                 No reviewable document. This account cannot be approved here.

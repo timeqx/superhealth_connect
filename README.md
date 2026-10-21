@@ -28,7 +28,7 @@ npm run dev
 ```
 
 Open http://localhost:3000. Without configuration, public pages and labelled
-`/preview/patient`, `/preview/admin`, `/preview/queue` are available. Protected
+`/preview/patient`, `/preview/booking`, `/preview/admin`, `/preview/queue` are available. Protected
 workspaces show setup guidance; there is no demo authentication bypass.
 
 ## Supabase setup
@@ -95,3 +95,37 @@ multi-connection concurrency, Supabase Storage, Auth emails, or Realtime.
 Generated database types await a running local Supabase environment.
 Optionally set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium binary.
 See the implementation checklist for precise results and remaining milestones.
+
+
+## UI preview and screenshots
+The redesigned UI uses the shared shadcn-compatible theme and labelled synthetic
+previews. `/preview/booking` exercises service, date/session, review and a pending
+receipt without saving an appointment. `/preview/queue` shows the five visual
+queue states, including disconnected updates. The staff preview demonstrates
+local-only queue transitions; the secure staff workspace retains real account
+review and read-only appointment requests.
+
+Run `npm run test:e2e` to capture screenshots and check 360, 390, 768 and 1440px.
+Screenshots live under `test-results/foundation-responsive-screens-do-not-overflow-*/`
+and `test-results/redesign-*/`. The runner uses a separate `.next-e2e` directory,
+port 3100 and empty Supabase configuration. See the implementation status for
+checks actually run and authenticated flows still awaiting acceptance.
+
+## Staff appointment review
+Signed-in staff can review pending requests at `/admin`, inspect the patient and
+session, and approve or decline with confirmation. Declining requires an explanation.
+Approval changes the appointment to Scheduled; staff check-in and live queue UI
+remain pending. Decisions use the existing transactional RPC with stale-record
+protection and retry keys. Use synthetic accounts while authenticated acceptance
+checks remain outstanding. `/preview/admin` remains a read-only decision preview.
+
+## Additional connected workflows
+- Patients can cancel or request a different session from **Manage appointment**.
+- Staff use `/admin/queue` for arrivals, check-in and service queue transitions.
+- Checked-in patients see their own queue on `/patient/appointments`, refreshed
+  every 15 seconds while visible (polling; Realtime is still pending).
+- Staff use `/admin/inquiries` for private drafts and published replies; patients
+  can follow up from their inquiry threads.
+These adapters use existing database functions; signed-in browser and hosted
+acceptance testing remains outstanding. See IMPLEMENTATION_STATUS.md for all
+remaining MVP work; these changes do not finish the whole application.

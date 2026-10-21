@@ -11,18 +11,15 @@ export const getActor = cache(async () => {
     error,
   } = await client.auth.getUser();
   if (error || !user) return null;
-  const { data: role, error: roleError } = await client
-    .from("user_roles")
-    .select("role,disabled_at")
-    .eq("user_id", user.id)
-    .single();
+  // Independent reads share the verified actor and remain protected by RLS.
+  const [roleResult, profileResult] = await Promise.all([
+    client.from("user_roles").select("role,disabled_at").eq("user_id", user.id).single(),
+    client.from("profiles").select("*").eq("id", user.id).single(),
+  ]);
+  const { data: role, error: roleError } = roleResult;
   if (roleError) throw new Error("Account access could not be verified.");
   if (!role || role.disabled_at) return null;
-  const { data: profile, error: profileError } = await client
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  const { data: profile, error: profileError } = profileResult;
   if (profileError) throw new Error("Your profile could not be loaded.");
   return {
     client,

@@ -2,6 +2,7 @@ import { requireActor } from "@/server/session";
 import { Badge, ButtonLink, Card, PageTitle } from "@/shared/ui/components";
 import { BookingForm } from "@/features/appointments/presentation/booking-form";
 import type { Slot } from "@/features/appointments/domain/appointment";
+import { BookingStepper } from "@/shared/ui/care-components";
 export default async function BookPage({
   searchParams,
 }: {
@@ -33,8 +34,12 @@ export default async function BookPage({
     });
     if (error) throw error;
     return (
-      <div className="narrow stack">
-        <BookingForm service={selected.name} slots={slots as Slot[]} />
+      <div className="stack">
+        <BookingForm
+          service={selected.name}
+          slots={slots as Slot[]}
+          asOf={new Date().toISOString()}
+        />
         {!slots.length && (
           <p>
             No available sessions. Please choose another service or check again
@@ -50,6 +55,7 @@ export default async function BookPage({
   return (
     <>
       <PageTitle eyebrow="STEP 1 OF 3" title="Choose your service" />
+      <BookingStepper step={1} />
       <div className="grid-three">
         {services.map((s) => (
           <Card key={s.id}>

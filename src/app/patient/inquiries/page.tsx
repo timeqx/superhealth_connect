@@ -1,6 +1,8 @@
 import { requireActor } from "@/server/session";
 import { InquiryForm } from "@/features/inquiries/presentation/inquiry-form";
-import { Badge, Card, PageTitle } from "@/shared/ui/components";
+import { Card, PageTitle } from "@/shared/ui/components";
+import { InquiryThread } from "@/features/inquiries/presentation/inquiry-thread";
+import { InquiryReply } from "@/features/inquiries/presentation/inquiry-reply";
 export default async function Inquiries() {
   const { client, user } = await requireActor();
   const { data, error } = await client
@@ -21,13 +23,12 @@ export default async function Inquiries() {
         </Card>
         <div className="stack">
           {data.map((i) => (
-            <Card key={i.id}>
-              <Badge>{i.status.replaceAll("_", " ")}</Badge>
-              <h2>{i.subject}</h2>
-              {i.inquiry_messages.map((m) => (
-                <p key={m.id}>{m.body}</p>
-              ))}
-            </Card>
+            <div className="stack" key={i.id}><InquiryThread
+              key={i.id}
+              subject={i.subject}
+              status={i.status}
+              messages={i.inquiry_messages}
+            /><InquiryReply id={i.id} /></div>
           ))}
           {!data.length && (
             <Card>

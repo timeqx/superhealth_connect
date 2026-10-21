@@ -1,8 +1,9 @@
 import { AuthForm } from "@/features/accounts/presentation/auth-form";
 import { ButtonLink, PageTitle } from "@/shared/ui/components";
+import { AuthShell } from "@/shared/ui/auth-shell";
 export default function Register() {
   return (
-    <div className="narrow stack">
+    <AuthShell>
       <PageTitle eyebrow="GET STARTED" title="Create your account">
         Verify your email first. Then complete your name, barangay, contact
         number, and private verification submission.
@@ -11,6 +12,6 @@ export default function Register() {
       <ButtonLink href="/sign-in" secondary>
         Back to sign in
       </ButtonLink>
-    </div>
+    </AuthShell>
   );
 }

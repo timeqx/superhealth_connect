@@ -17,6 +17,35 @@ export default async function ProfilePage() {
   return (
     <div className="narrow stack">
       <PageTitle eyebrow="YOUR ACCOUNT" title="Profile and verification" />
+      <ol
+        className="verification-progress"
+        aria-label="Account verification progress"
+      >
+        <li
+          aria-current={
+            profile.review_status === "incomplete" ||
+            profile.review_status === "rejected"
+              ? "step"
+              : undefined
+          }
+        >
+          1. Profile & document
+        </li>
+        <li
+          aria-current={
+            profile.review_status === "pending" ? "step" : undefined
+          }
+        >
+          2. Staff review
+        </li>
+        <li
+          aria-current={
+            profile.review_status === "approved" ? "step" : undefined
+          }
+        >
+          3. Ready to book
+        </li>
+      </ol>
       <Badge>{profile.review_status.toUpperCase()}</Badge>
       {profile.review_status === "rejected" && (
         <p className="notice">

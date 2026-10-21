@@ -1,8 +1,9 @@
 import { AuthForm } from "@/features/accounts/presentation/auth-form";
 import { ButtonLink, Card, PageTitle } from "@/shared/ui/components";
+import { AuthShell } from "@/shared/ui/auth-shell";
 export default function SignIn() {
   return (
-    <div className="narrow stack">
+    <AuthShell>
       <PageTitle eyebrow="WELCOME BACK" title="Care starts here.">
         Sign in to manage your visits. Staff use the same secure sign-in.
       </PageTitle>
@@ -15,6 +16,6 @@ export default function SignIn() {
         <h2>Here for your first visit?</h2>
         <p>Create an account and submit your verification before booking.</p>
       </Card>
-    </div>
+    </AuthShell>
   );
 }
