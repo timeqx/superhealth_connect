@@ -1,18 +1,22 @@
 import { requireActor } from "@/server/session";
+import { Pagination, pageNumber } from "@/shared/ui/pagination";
 import { Card, PageTitle } from "@/shared/ui/components";
 import { Button } from "@/shared/ui/button";
 import { ReviewPanel } from "@/features/accounts/presentation/review-panel";
 import { AdminRequestPanel } from "@/shared/ui/admin-request-panel";
-export default async function Reviews() {
+export default async function Reviews({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { client } = await requireActor(true);
-  const { data, error } = await client
+  const page = pageNumber((await searchParams).page);
+  const { data, error, count } = await client
     .from("profiles")
     .select(
       "id,first_name,middle_name,last_name,barangay_code,other_barangay,current_document_id,submitted_at,review_version",
+      { count: "exact" },
     )
     .eq("review_status", "pending")
     .order("submitted_at")
-    .limit(50);
+    .order("id")
+    .range((page - 1) * 20, page * 20 - 1);
   if (error) throw error;
   return (
     <>
@@ -54,6 +58,7 @@ export default async function Reviews() {
           </Card>
         ))}
       </div>
+      <Pagination page={page} count={count ?? 0} />
       {!data.length && (
         <Card>
           <h2>No accounts awaiting review</h2>

@@ -62,11 +62,26 @@ try {
   }
 } catch (error) {
   await client.query("rollback").catch(() => {});
-  console.error(
-    error.message === "USER_NOT_READY"
-      ? "Provisioning stopped: the account does not exist or its email is unverified."
-      : "Provisioning failed. Check the operator connection, database schema, and permissions. No credentials or database response were logged.",
-  );
+  // Fixed messages only: raw PostgreSQL/network errors can contain credentials,
+  // connection details or account data.
+  const guidance = {
+    ENOTFOUND: "Database hostname could not be resolved. If using Supabase's IPv6 direct endpoint, copy Connect > Session pooler into STAFF_DATABASE_URL for IPv4 access. Copy its full host AND username.",
+    EAI_AGAIN: "Database DNS lookup temporarily failed. Check DNS/network availability before retrying.",
+    ENETUNREACH: "Database network is unreachable. Use Supabase Connect > Session pooler on an IPv4-only network.",
+    ECONNREFUSED: "Database connection refused. Check the copied host/port and whether the project is running.",
+    ETIMEDOUT: "Database connection timed out. Check network access, project availability and database network restrictions.",
+    "28P01": "Database password authentication failed. Use the database password (not an API key), percent-encode reserved characters, and copy the username from Connect.",
+    "42501": "Operator database role lacks permission. Use an authorized provisioning connection; do not disable RLS.",
+    "42P01": "Required database tables are missing. Check the selected project and installed migrations.",
+    "42703": "Required database columns are missing. Check that the repository migrations are installed.",
+    SELF_SIGNED_CERT_IN_CHAIN: "TLS certificate verification failed. Configure the trusted database CA; do not disable certificate verification.",
+  };
+  const message = error.message === "USER_NOT_READY"
+    ? "The account does not exist in user_roles or its email is unverified. Confirm the account and foundation migration."
+    : guidance[error.code] ?? (/timeout/i.test(error.message ?? "")
+      ? "Connection timed out. Check database endpoint, network reachability and project availability."
+      : "Check the operator connection, database schema and permissions. Sensitive error details were withheld.");
+  console.error(`Provisioning stopped: ${message}`);
   process.exitCode = 1;
 } finally {
   await client.end().catch(() => {});

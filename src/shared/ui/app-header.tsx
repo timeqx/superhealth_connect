@@ -36,7 +36,7 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
     : preview
     ? [["/preview/patient", "Patient overview"], ["/preview/booking", "Booking flow"], ["/preview/queue", "Patient queue"], ["/preview/admin", "Staff preview"]]
     : pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
-    ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
+    ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/history", "History"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
     : [["/services", "Services"], ["/patient/book", "Book a visit"]];
   const accountAction = role ? (
     <form action={signOut}><Button type="submit" variant="ghost">Sign out</Button></form>

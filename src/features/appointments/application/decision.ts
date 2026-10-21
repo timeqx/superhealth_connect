@@ -5,6 +5,7 @@ export const appointmentDecisionSchema = z.object({
   decision: z.enum(["approve", "reject"]),
   expected: z.iso.datetime({ offset: true }),
   key: z.uuid(),
+  target: z.uuid().nullable().optional(),
   reason: z.string().trim().max(1000),
 }).refine(value => value.decision !== "reject" || value.reason.length > 0, {
   path: ["reason"],

@@ -15,7 +15,7 @@ export default async function ProfilePage() {
       </Card>
     );
   return (
-    <div className="narrow stack">
+    <div className="stack">
       <PageTitle eyebrow="YOUR ACCOUNT" title="Profile and verification" />
       <ol
         className="verification-progress"
@@ -53,14 +53,14 @@ export default async function ProfilePage() {
         </p>
       )}
       {["incomplete", "rejected"].includes(profile.review_status) ? (
-        <>
-          <ProfileForm profile={profile} />
+        <div className="profile-layout">
+          <Card><h2>Personal details</h2><ProfileForm profile={profile} /></Card>
           <Card>
             <VerificationUpload
               configured={Boolean(process.env.SUPABASE_SECRET_KEY)}
             />
           </Card>
-        </>
+        </div>
       ) : (
         <Card>
           <h2>

@@ -1393,3 +1393,59 @@ tr:last-child td {
 .page-skeleton .card { box-shadow: none; }
 @keyframes skeleton-breathe { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .page-skeleton { animation: none; } }
+/* Compact patient workspaces: summaries first, details on demand. */
+.profile-layout,
+.inquiries-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.inquiries-layout { grid-template-columns: minmax(280px, .8fr) minmax(0, 1.6fr); }
+.profile-layout > *, .inquiries-layout > * { min-width: 0; }
+.visits-toolbar, .visits-filter {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.visits-toolbar { justify-content: space-between; }
+.visits-filter label { display: grid; gap: 6px; min-width: 180px; }
+.visit-list { display: grid; gap: 12px; }
+.visit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.visit-row h2, .inquiry-row h2, .inquiry-row h3 { font-size: 18px; }
+.visit-row p, .inquiry-row p { font-size: 14px; }
+.record-summary { min-width: 0; overflow-wrap: anywhere; }
+.visit-extra { grid-column: 1 / -1; min-width: 0; }
+.inquiry-row.card { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 14px; padding: 18px; }
+.inquiry-row .record-summary { flex: 1 1 200px; }
+.message-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.inquiry-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sheet-content.detail-dialog {
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(700px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1000px) {
+  .visit-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 800px) {
+  .profile-layout, .inquiries-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 500px) {
+  .visit-row { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; }
+  .visits-filter, .visits-filter label { flex: 1; min-width: 0; }
+  .sheet-content.detail-dialog { padding: 64px 20px 24px; }
+}

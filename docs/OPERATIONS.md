@@ -7,7 +7,7 @@ Create sessions using Manila local times. Existing session time/service cannot b
 edited: close it to new requests and create another session. Existing reservations
 are retained when a session closes. Capacity cannot fall below reserved visits.
 Services support publication, booking availability, requirements and arrival rules;
-creating/renaming service definitions is still a database/operator task. Service
+creating/renaming service definitions is available after the staff-management migration. Service
 settings currently use last-write-wins; session updates detect stale timestamps.
 Only publish policies approved by center staff. Seed values are not approved policies.
 
@@ -15,7 +15,11 @@ Only publish policies approved by center staff. Seed values are not approved pol
 within an inclusive Manila date range (maximum 93 days). The denominator includes
 all statuses. This is a request-cohort report, not visits performed during that
 period. The latest 30 audit actions are shown separately without record metadata.
-Wait-time/service-duration metrics and exports are not implemented.
+Decision, waiting and service-duration averages are available after the staff-management
+migration, with sample counts and exclusions. Reports can export request-outcome
+counts as CSV for the selected dates; duration metrics are not included in that
+export. `/admin/audit` provides paginated exact-action filtering without sensitive
+metadata. Both routes enforce staff access independently.
 
 ## Private updates
 
@@ -25,8 +29,23 @@ existing `supabase_realtime` publication and RLS; events trigger authoritative
 server reads. Reconnection/visibility changes also refresh, with a 60-second
 fallback while visible. Own queue snapshots continue polling every 15 seconds
 because another person's queue movement does not emit a notification to this
-patient. No full queue is exposed. Staff cross-browser realtime refresh and a
-five-second queue-update target remain acceptance work.
+patient. No full queue is exposed to patients. Staff layouts subscribe to appointments,
+queue tickets and inquiry changes after the staff-management migration; existing RLS
+still applies to every subscriber. Cross-browser acceptance and a five-second
+queue-update target remain unverified.
+
+## Additional staff workflows
+
+`/admin/history` supports status/reference filtering, cancellation and no-show
+decisions with reasons. `/admin/book` creates pending requests on behalf of approved
+patients. Staff must confirm identity, consent and applicable policy before acting.
+The request dashboard can flag requests older than `APPOINTMENT_REVIEW_HOURS`;
+leave this unset until the center approves a deadline.
+
+The local migration `20261021064654_staff_management.sql` adds protected service
+definition, draft editing, staff booking and duration-report RPCs, plus staff
+Realtime table publications. Apply through the normal reviewed migration workflow
+before using those features. This implementation did not apply it to hosted data.
 
 Reference: [Supabase Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes).
 
@@ -39,6 +58,8 @@ an operator credential, never a browser key. Preserve TLS certificate validation
 
 `npm run email:worker` performs a read-only count by outbox state. No mail is sent.
 `npm run email:worker -- --send` processes up to 20 eligible messages and exits.
+`npm run test:email` checks provider failure/retry behavior offline without sending
+mail or connecting to a database. This does not verify provider deliverability.
 Run this command from an operator-controlled scheduler every minute after setup
 and delivery acceptance; this change does not configure any scheduler or send mail.
 

@@ -18,17 +18,24 @@ test("patient authorization, inquiry response, notification and staff workspace"
     await signIn(patient, "PATIENT");
     await patient.goto("/admin/schedules");
     await expect(patient).toHaveURL(/access-denied/);
+    const deniedExport = await patient.request.get("/admin/reports/export?from=2026-10-01&to=2026-10-21");
+    expect(deniedExport.status()).toBe(403);
     await patient.goto("/patient/inquiries");
     await patient.getByLabel("Subject", { exact: true }).fill(subject);
     await patient.getByLabel("Message", { exact: true }).fill("Synthetic workflow verification only.");
     await patient.getByRole("button", { name: "Send inquiry", exact: true }).click();
     await expect(patient.getByText(subject, { exact: true })).toBeVisible();
     await signIn(staff, "STAFF");
-    for (const path of ["/admin/schedules", "/admin/reports", "/admin/queue"]) {
+    for (const path of ["/admin/schedules", "/admin/reports", "/admin/queue", "/admin/history", "/admin/audit", "/admin/book"]) {
       await staff.goto(path);
       await expect(staff.locator("main h1")).toBeVisible();
       await expect(staff.getByText("Something went wrong", { exact: false })).toHaveCount(0);
     }
+    const exported = await staff.request.get("/admin/reports/export?from=2026-10-01&to=2026-10-21");
+    expect(exported.status()).toBe(200);
+    expect(exported.headers()["cache-control"]).toContain("no-store");
+    expect(await exported.text()).toContain("total_requests");
+    expect((await staff.request.get("/admin/reports/export?from=2026-02-30&to=2026-03-01")).status()).toBe(400);
     await staff.goto("/admin/inquiries");
     const thread = staff.locator(".card").filter({ has: staff.getByRole("heading", { name: subject, exact: true }) });
     await thread.getByLabel("Staff response").fill("Synthetic private draft");
@@ -36,8 +43,10 @@ test("patient authorization, inquiry response, notification and staff workspace"
     await expect(thread.getByText("Private draft ·", { exact: false })).toBeVisible();
     await patient.reload();
     await expect(patient.getByText("Synthetic private draft", { exact: false })).toHaveCount(0);
-    await thread.getByLabel("Staff response").fill(`Synthetic reply to ${subject}`);
-    await thread.getByRole("button", { name: "Send reply", exact: true }).click();
+    // Edit and publish the saved draft itself rather than creating another reply.
+    const savedDraft = thread.locator(".inquiry-message").filter({ hasText: "Private draft" });
+    await savedDraft.getByLabel("Staff response").fill(`Synthetic reply to ${subject}`);
+    await savedDraft.getByRole("button", { name: "Send reply", exact: true }).click();
     await expect(thread.getByText(`Synthetic reply to ${subject}`, { exact: true })).toBeVisible();
     await patient.reload();
     await expect(patient.getByText(`Synthetic reply to ${subject}`, { exact: true })).toBeVisible();

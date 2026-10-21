@@ -326,3 +326,65 @@ end-to-end acceptance. The application is still partial, not pilot-ready.
   recovery and deliverability. Other unfinished UI includes no-show controls,
   pagination of older staff lists, editing existing inquiry drafts and expanded
   reporting. The app is not yet pilot-ready.
+
+## Staff workflow completion — 21 October 2026
+- Added `/admin/history`: paginated visits, status/exact-reference filters,
+  staff cancellation and no-show controls with required patient-visible reasons,
+  confirmation, optimistic timestamps and retry-safe existing RPC calls.
+- Staff can suggest an available alternative when declining; patients see the
+  suggestion with an explicit reminder that it is not reserved.
+- Added `/admin/book`: approved-patient lookup, published-service session selection,
+  staff booking with reason, eligibility/capacity/duplicate checks and audit record.
+  Staff-created requests remain pending until explicitly approved.
+- Added draft service creation and name/identifier/description editing; new services
+  remain unpublished. Existing inquiry drafts can be edited or published in place.
+  Both use staff-only, optimistic, retry-safe database functions.
+- Added configured review-overdue counts (`APPOINTMENT_REVIEW_HOURS`, disabled
+  until an approved deadline is supplied), plus pagination for requests, reviews,
+  inquiries and patient appointments. Patient appointments support status filtering.
+- Added staff Realtime subscriptions with visible-page polling fallback, and
+  aggregate decision/wait/service durations with explicit cohorts and exclusions.
+- New local migration: `20261021064654_staff_management.sql`. It has NOT been
+  applied to hosted Supabase. Staff booking, service-definition editing, draft
+  editing, duration metrics and staff table publications depend on this migration.
+- Verification: 13 embedded PostgreSQL workflow tests passed, including staff-only
+  service creation/replay, private draft edits/publication, staff booking capacity,
+  no-show transitions and bounded staff-only duration reporting. TypeScript passed.
+  Targeted lint initially found an impure render-time clock call; moved the overdue
+  query into a server helper. Final targeted ESLint and TypeScript checks passed.
+- Still pending: authenticated browser journeys, provider delivery/recovery,
+  Realtime reconnect/concurrency acceptance, multi-connection races and production
+  build. Report exports and deeper audit-event browsing remain enhancements;
+  center policies, SMTP/provider setup and pilot acceptance are not completed.
+
+## Report export and audit browsing — 21 October 2026
+- Added staff-only CSV export of exact request-status counts for a validated,
+  inclusive Manila date range (maximum 93 days). Exports contain aggregate counts,
+  cohort labels and dates, not patient identifiers. Responses are private/no-store;
+  unauthenticated and non-staff requests are rejected by the route itself.
+- Added `/admin/audit` with exact-action filtering and pagination, linked from
+  Reports. Sensitive audit metadata and record identifiers are not displayed.
+- Added focused report-range tests for Manila boundaries, impossible dates,
+  reversed/oversized ranges and invalid input. No live database changes required.
+- Passed: TypeScript, targeted ESLint and both report-range tests. Authenticated
+  export downloads and audit browsing have not yet been browser-verified.
+- Email provider setup remains deferred until a verified sending domain exists.
+  Authenticated browser, Realtime and multi-connection acceptance remain pending.
+
+## Production build and delivery recovery — 21 October 2026
+- Extracted the email delivery loop into an injectable worker module while keeping
+  the CLI read-only by default. Added `npm run test:email` for offline provider
+  recovery checks; no database connection or real email is used by these tests.
+- Verified stable idempotency keys after ambiguous provider failure, permanent
+  failure handling, retry exhaustion, and suppression of ineligible recipients.
+  Ineligible recipients now receive a specific sanitized failure code.
+- Updated authenticated acceptance coverage for patient export denial, staff CSV
+  download/invalid dates, new staff pages and editing/publishing an existing draft.
+  Fixed the test selector ambiguity introduced by inline draft editors.
+- Passed: production `npm run build` (all routes), targeted ESLint, all 19 embedded
+  PostgreSQL tests and 3 offline email-worker recovery tests.
+- Authenticated Playwright configuration still refuses execution: E2E_SUPABASE_URL
+  is absent. Docker/local Supabase is unavailable on this machine. Browser journeys,
+  real concurrent connections, actual Realtime reconnects and provider delivery
+  therefore remain unverified. Mock provider tests do not prove inbox delivery or
+  database worker leasing under concurrency. No hosted migration or email was sent.

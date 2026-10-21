@@ -18,6 +18,7 @@
     "test:e2e:auth": "playwright test --config playwright.auth.config.ts",
     "staff:provision": "node scripts/provision-staff.mjs",
     "email:worker": "node scripts/email-worker.mjs",
+    "test:email": "node --test scripts/email-delivery.test.mjs",
     "db:types": "supabase gen types typescript --local > src/shared/supabase/database.generated.ts"
   },
   "dependencies": {

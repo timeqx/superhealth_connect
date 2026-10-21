@@ -14,6 +14,7 @@ export async function decideAppointment(input: unknown): Promise<ActionResult> {
     const { error } = await actor.client.rpc("change_appointment", {
       p_id: p.id, p_action: p.decision, p_key: p.key,
       p_expected: p.expected, p_reason: p.reason || null,
+      p_target: p.decision === "reject" ? p.target ?? null : null,
     });
     if (error) throw error;
     revalidatePath("/admin");

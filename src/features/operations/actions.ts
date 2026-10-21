@@ -5,6 +5,18 @@ import { getActor } from "@/server/session";
 import { safeError } from "@/shared/lib/errors";
 import { manilaInputToUtc } from "@/shared/lib/time";
 
+export async function saveDefinition(input: unknown) {
+  try {
+    const p = z.object({ id: z.uuid().nullable(), expected: z.iso.datetime({ offset: true }).nullable(), name: z.string().trim().min(2).max(120), slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).max(100), description: z.string().trim().min(1).max(2000), key: z.uuid() }).parse(input);
+    const actor = await getActor();
+    if (!actor || actor.role !== "admin") throw new Error("FORBIDDEN");
+    const { error } = await actor.client.rpc("save_service_definition", { p_id: p.id, p_name: p.name, p_slug: p.slug, p_description: p.description, p_expected: p.expected, p_key: p.key });
+    if (error) throw error;
+    revalidatePath("/admin/schedules"); revalidatePath("/services");
+    return { ok: true, message: "Service details saved. New services stay unpublished until you publish them." };
+  } catch (error) { return { ok: false, message: error instanceof z.ZodError ? error.issues[0].message : safeError(error) }; }
+}
+
 export async function saveOperations(kind: "service" | "slot", input: unknown) {
   try {
     const actor = await getActor();

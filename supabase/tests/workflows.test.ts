@@ -18,6 +18,7 @@ async function request(key: string) {
   }>("select public.request_appointment($1,$2) as value", [slot, key]);
 }
 beforeAll(async () => {
+  await db.exec("create publication supabase_realtime;");
   await db.exec(
     `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`,
   );
@@ -25,6 +26,7 @@ beforeAll(async () => {
     "202610200001_foundation.sql",
     "202610200002_workflows.sql",
     "202610200003_accounts_operations.sql",
+    "20261021064654_staff_management.sql",
   ])
     await db.exec(readFileSync(`supabase/migrations/${name}`, "utf8"));
   await db.exec(
@@ -35,6 +37,38 @@ afterAll(async () => {
   await db.close();
 });
 describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integration)", () => {
+  it("protects service creation and replays staff changes", async () => {
+    const args = [null, "Synthetic new service", "synthetic-new", "Synthetic only", null, "90000000-0000-4000-8000-000000000001"];
+    const sql = "select public.save_service_definition($1,$2,$3,$4,$5,$6) as value";
+    await actor(a);
+    await expect(db.query(sql, args)).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    const first = await db.query<{value: {id: string; is_published: boolean}}>(sql,args);
+    const second = await db.query<{value: {id: string}}>(sql,args);
+    expect(first.rows[0].value.id).toBe(second.rows[0].value.id);
+    expect(first.rows[0].value.is_published).toBe(false);
+    await expect(db.query(sql,[first.rows[0].value.id,"Changed","synthetic-new","Synthetic only","2000-01-01","90000000-0000-4000-8000-000000000002"])).rejects.toThrow("CONFLICT");
+  });
+  it("edits drafts privately and publishes once", async () => {
+    await actor(a);
+    const thread = await db.query<{value: {id: string}}>("select public.create_inquiry('Synthetic draft edit','General','Question',$1) as value", ["91000000-0000-4000-8000-000000000001"]);
+    await actor(staff);
+    const draft = await db.query<{value: {id: string; updated_at: string}}>("select public.reply_inquiry($1,'Draft',false,'in_progress',$2) as value", [thread.rows[0].value.id,"91000000-0000-4000-8000-000000000002"]);
+    const sql = "select public.edit_inquiry_draft($1,$2,$3,$4,$5,$6) as value";
+    const args = [draft.rows[0].value.id,"Edited privately",false,"in_progress",draft.rows[0].value.updated_at,"91000000-0000-4000-8000-000000000003"];
+    await actor(a);
+    await expect(db.query(sql,args)).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    const edit = await db.query<{value: {updated_at: string}}>(sql,args);
+    await actor(a);
+    expect((await db.query("select id from public.inquiry_messages where id=$1",[args[0]])).rows).toHaveLength(0);
+    await actor(staff);
+    const publish = [args[0],"Published edited reply",true,"resolved",edit.rows[0].value.updated_at,"91000000-0000-4000-8000-000000000004"];
+    await db.query(sql,publish); await db.query(sql,publish);
+    await expect(db.query(sql,[...publish.slice(0,5),"91000000-0000-4000-8000-000000000005"])).rejects.toThrow("CONFLICT");
+    await actor(a);
+    expect((await db.query("select id from public.inquiry_messages where id=$1",[args[0]])).rows).toHaveLength(1);
+  });
   it("reserves capacity once and replays identical requests", async () => {
     await actor(a);
     const key = "40000000-0000-4000-8000-000000000001";
@@ -235,6 +269,33 @@ describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integr
     await db.query("select public.mark_notification_read($1)", [id]);
     expect((await db.query<{read_at: string}>("select read_at from public.notifications where id=$1", [id])).rows[0].read_at).toBeTruthy();
   });
+  it("staff booking reserves once, denies patient callers and records no-shows", async () => {
+    await actor(staff);
+    const created = await db.query<{value: {id: string}}>("select public.save_slot(null,$1,'2098-01-01T09:00:00+08:00','2098-01-01T10:00:00+08:00',1,true,null,$2) as value",[service,"92000000-0000-4000-8000-000000000001"]);
+    const id = created.rows[0].value.id;
+    const args = [a,id,"Patient requested staff assistance","92000000-0000-4000-8000-000000000002"];
+    const sql = "select public.staff_request_appointment($1,$2,$3,$4) as value";
+    await actor(a);
+    await expect(db.query(sql,args)).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    const booked = await db.query<{value: {id: string; updated_at: string}}>(sql,args);
+    const replay = await db.query<{value: {id: string}}>(sql,args);
+    expect(booked.rows[0].value.id).toBe(replay.rows[0].value.id);
+    await expect(db.query(sql,[b,id,"Other request","92000000-0000-4000-8000-000000000003"])).rejects.toThrow("SLOT_FULL");
+    const approved = await db.query<{value: {updated_at: string}}>("select public.change_appointment($1,'approve',$2,$3) as value",[booked.rows[0].value.id,"92000000-0000-4000-8000-000000000004",booked.rows[0].value.updated_at]);
+    const missed = await db.query<{value: {status: string}}>("select public.change_appointment($1,'no_show',$2,$3,'Synthetic policy decision') as value",[booked.rows[0].value.id,"92000000-0000-4000-8000-000000000005",approved.rows[0].value.updated_at]);
+    expect(missed.rows[0].value.status).toBe("no_show");
+  });
+  it("limits duration reports to staff and bounded cohorts", async () => {
+    await actor(a);
+    await expect(db.query("select public.operational_durations(now()-interval '1 day',now()+interval '1 day')")).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    await expect(db.query("select public.operational_durations(now()-interval '100 days',now())")).rejects.toThrow("VALIDATION_ERROR");
+    const report = await db.query<{value: {decisions: {cohort: number}; queue: {wait_samples: number; service_samples: number}}}>("select public.operational_durations(now()-interval '1 day',now()+interval '1 day') as value");
+    expect(report.rows[0].value.decisions.cohort).toBeGreaterThan(0);
+    expect(report.rows[0].value.queue.wait_samples).toBe(1);
+    expect(report.rows[0].value.queue.service_samples).toBe(1);
+  });
   it("keeps inquiry drafts staff-only and publishes replies to the owner", async () => {
     await actor(a);
     const { rows } = await db.query<{ value: { id: string } }>(
@@ -249,11 +310,11 @@ describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integr
     );
     await actor(a);
     expect(
-      (await db.query("select * from public.inquiry_messages")).rows,
+      (await db.query("select * from public.inquiry_messages where inquiry_id=$1", [id])).rows,
     ).toHaveLength(1);
     await actor(b);
     expect(
-      (await db.query("select * from public.inquiry_messages")).rows,
+      (await db.query("select * from public.inquiry_messages where inquiry_id=$1", [id])).rows,
     ).toHaveLength(0);
     await actor(staff);
     await db.query(
@@ -262,7 +323,7 @@ describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integr
     );
     await actor(a);
     expect(
-      (await db.query("select * from public.inquiry_messages")).rows,
+      (await db.query("select * from public.inquiry_messages where inquiry_id=$1", [id])).rows,
     ).toHaveLength(2);
   });
 });

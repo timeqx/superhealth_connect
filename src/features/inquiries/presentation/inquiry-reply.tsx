@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { replyInquiry } from "../application-actions";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
-export function InquiryReply({ id, staff = false }: { id: string; staff?: boolean }) {
-  const router = useRouter(); const [body, setBody] = useState(""); const [status, setStatus] = useState("in_progress");
+export function InquiryReply({ id, staff = false, draft }: { id: string; staff?: boolean; draft?: { id: string; body: string; updated_at: string } }) {
+  const router = useRouter(); const [body, setBody] = useState(draft?.body ?? ""); const [status, setStatus] = useState("in_progress");
   const [message, setMessage] = useState(""); const [pending, setPending] = useState(false);
   const busy = useRef(false); const attempt = useRef<{ payload: string; key: string } | null>(null);
   async function submit(publish: boolean) {
     if (busy.current || !body.trim()) return;
     busy.current = true; setPending(true);
-    const input = { id, body, publish, status: staff ? status : "open" }; const payload = JSON.stringify(input);
+    const input = { id, body, draft: draft?.id, expected: draft?.updated_at, publish, status: staff ? status : "open" }; const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
     try { const result = await replyInquiry({ ...input, key: attempt.current.key }); setMessage(result.message); if (result.ok) { if (publish) setBody(""); attempt.current = null; router.refresh(); } }
     catch { setMessage("Connection interrupted. Retry unchanged to check your reply."); } finally { busy.current = false; setPending(false); }
