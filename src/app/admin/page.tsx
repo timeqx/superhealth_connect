@@ -34,7 +34,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       <PageTitle eyebrow="STAFF WORKSPACE" title="Appointment requests">
         Authorized staff view · Oldest pending requests first
       </PageTitle>
-      <RequestTable requests={requests} live />
+      <RequestTable requests={requests} />
       <p className="notice">{overdue ? `${overdue.count ?? 0} pending requests exceed the configured ${hours}-hour review deadline.` : "Review deadline is not configured. Requests remain pending until staff decides."}</p>
       <nav aria-label="Request pages">{page > 1 && <Link href={`?page=${page - 1}`}>Previous · </Link>}Page {page}{page * 25 < (count ?? 0) && <Link href={`?page=${page + 1}`}> · Next</Link>}</nav>
       <p className="caption">

@@ -27,15 +27,8 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const preview = pathname.startsWith("/preview/");
-  const staffPreview = pathname === "/preview/admin";
-  const staffHeader = role === "admin" || staffPreview;
-  // Preview navigation changes presentation only; secure routes still check the actor.
-  const links = staffPreview
-    ? [["/preview/admin", "Staff overview"], ["/admin", "Appointment requests"], ["/admin/reviews", "Account reviews"]]
-    : preview
-    ? [["/preview/patient", "Patient overview"], ["/preview/booking", "Booking flow"], ["/preview/queue", "Patient queue"], ["/preview/admin", "Staff preview"]]
-    : pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
+  const staffHeader = role === "admin";
+  const links = pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
     ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/history", "History"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
     : [["/services", "Services"], ["/patient/book", "Book a visit"]];
   const accountAction = role ? (
@@ -60,12 +53,12 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
   return (
     <header className="site-header glass-surface">
       <div className="header-inner">
-        <Link className="brand" href={staffPreview ? "/preview/admin" : role === "admin" ? "/admin" : "/"} aria-label={staffHeader ? "SuperHealth staff workspace" : "SuperHealth Connect home"}>
+        <Link className="brand" href={role === "admin" ? "/admin" : "/"} aria-label={staffHeader ? "SuperHealth staff workspace" : "SuperHealth Connect home"}>
           <span className="brand-mark">
             <HeartPulse size={23} strokeWidth={1.8} />
           </span>
           <span>
-            SuperHealth<span className="brand-subtitle">{staffPreview ? "STAFF PREVIEW" : staffHeader ? "STAFF PORTAL" : preview ? "PATIENT PREVIEW" : "CONNECT"}</span>
+            SuperHealth<span className="brand-subtitle">{staffHeader ? "STAFF PORTAL" : "CONNECT"}</span>
           </span>
         </Link>
         <nav

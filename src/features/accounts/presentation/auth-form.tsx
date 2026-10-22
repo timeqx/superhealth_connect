@@ -4,10 +4,12 @@ import { useForm } from "react-hook-form";
 import { authenticate } from "../application/auth-actions";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 export function AuthForm({
   mode,
 }: {
-  mode: "sign-in" | "register" | "forgot" | "reset";
+  mode: "sign-in" | "forgot" | "reset";
 }) {
   const {
     register,
@@ -15,6 +17,8 @@ export function AuthForm({
     formState: { isSubmitting },
   } = useForm({ defaultValues: { email: "", password: "", consent: false } });
   const notify = useSnackbar();
+  const router = useRouter();
+  const [navigating, startNavigation] = useTransition();
   return (
     <form
       className="form"
@@ -23,8 +27,7 @@ export function AuthForm({
           const result = await authenticate(mode, values);
           notify(result.message, !result.ok);
           if (result.redirectTo) {
-            try { sessionStorage.setItem("auth-feedback", mode === "reset" ? "password-updated" : "signed-in"); } catch { /* Storage may be disabled. */ }
-            window.location.assign(result.redirectTo);
+            startNavigation(() => { router.replace(result.redirectTo!); router.refresh(); });
           }
         } catch { notify("Unable to connect. Please try signing in again.", true); }
       })}
@@ -55,28 +58,17 @@ export function AuthForm({
           />
         </label>
       )}
-      {mode === "register" && (
-        <label>
-          <input
-            style={{ width: 20, minHeight: 20, marginRight: 10 }}
-            type="checkbox"
-            required
-            {...register("consent")}
-          />
-          I have read the <a href="/privacy">development privacy notice</a> and
-          will use synthetic information.
-        </label>
-      )}
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting
+      <Button type="submit" disabled={isSubmitting || navigating}>
+        {isSubmitting || navigating
           ? "Please wait…"
           : {
               "sign-in": "Sign in",
-              register: "Create account & verify email",
+
               forgot: "Send reset link",
               reset: "Update password",
             }[mode]}
       </Button>
+      
     </form>
   );
 }

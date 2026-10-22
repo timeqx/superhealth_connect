@@ -1,5 +1,4 @@
 import {
-  sampleCatalog,
   type Service,
 } from "@/features/services/domain/catalog";
 import { supabaseConfig } from "@/shared/supabase/config";
@@ -8,7 +7,7 @@ import { Badge, ButtonLink, Card, PageTitle } from "@/shared/ui/components";
 import { ServiceCard } from "@/shared/ui/care-components";
 export default async function Services() {
   const configured = Boolean(supabaseConfig());
-  let services: Service[] = sampleCatalog;
+  let services: Service[] = [];
   if (configured) {
     const { data, error } = await (await serverClient())
       .from("services")
@@ -25,8 +24,7 @@ export default async function Services() {
       </PageTitle>
       {!configured && (
         <p className="notice">
-          Proposed catalog for development. Availability and requirements need
-          center confirmation.
+          Service information is temporarily unavailable. Please try again later.
         </p>
       )}
       <div className="grid-three">
@@ -49,7 +47,7 @@ export default async function Services() {
           </ServiceCard>
         ))}
       </div>
-      {services.length === 0 && (
+      {configured && services.length === 0 && (
         <Card>
           <h2>No services published yet</h2>
           <p>

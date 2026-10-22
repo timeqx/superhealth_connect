@@ -7,7 +7,7 @@ import { formatDate, formatTime } from "@/shared/lib/time";
 export function StaffBook({ patients, slots }: { patients: { id: string; first_name: string; last_name: string }[]; slots: { id: string; starts_at: string; remaining: number }[] }) {
   const [pending, setPending] = useState(false); const [saved, setSaved] = useState(false); const [message, setMessage] = useState("");
   const attempt = useRef({ payload: "", key: "" });
-  return <form className="stack" onSubmit={async e => {
+  return <form className="form" onSubmit={async e => {
     e.preventDefault(); if (pending || saved) return;
     const data = new FormData(e.currentTarget);
     const input = { patient: data.get("patient"), slot: data.get("slot"), reason: data.get("reason") };

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Slot } from "../domain/appointment";
 import { formatDate, formatTime, manilaDate } from "@/shared/lib/time";
 import { book } from "@/server/actions";
@@ -7,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Card } from "@/shared/ui/components";
 import { BookingStepper } from "@/shared/ui/care-components";
-import { CalendarDays, ShieldCheck } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 export function SlotPicker({
   slots,
   value,
@@ -89,45 +90,18 @@ export function BookingForm({
   slots,
   service,
   asOf,
-  demo = false,
 }: {
   slots: Slot[];
   service: string;
   asOf: string;
-  demo?: boolean;
 }) {
   const [slot, setSlot] = useState("");
+  const router = useRouter();
   const [review, setReview] = useState(false);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [key, setKey] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const selected = slots.find((s) => s.id === slot);
-  if (submitted)
-    return (
-      <Card>
-        <ShieldCheck className="text-primary" size={32} />
-        <p className="eyebrow">SYNTHETIC RECEIPT</p>
-        <h2>Request submitted for review</h2>
-        <p>
-          This demo request is pending approval. It is not a scheduled
-          appointment or queue ticket. Nothing was saved.
-        </p>
-        <p>
-          {service} · {selected && formatDate(selected.starts_at)}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            setSubmitted(false);
-            setReview(false);
-          }}
-        >
-          Back to sample booking
-        </Button>
-      </Card>
-    );
   return (
     <div className="stack">
       <BookingStepper step={review ? 3 : 2} />
@@ -138,7 +112,7 @@ export function BookingForm({
             onSubmit={async (event) => {
               event.preventDefault();
               if (!selected || selected.remaining <= 0) return;
-              if (!demo && Date.parse(selected.starts_at) <= Date.parse(asOf)) {
+              if (Date.parse(selected.starts_at) <= Date.parse(asOf)) {
                 setMessage(
                   "This session has started. Please choose another session.",
                 );
@@ -148,10 +122,6 @@ export function BookingForm({
                 setReview(true);
                 return;
               }
-              if (demo) {
-                setSubmitted(true);
-                return;
-              }
               setPending(true);
               const retryKey = key || crypto.randomUUID();
               setKey(retryKey);
@@ -159,7 +129,7 @@ export function BookingForm({
                 const result = await book({ slotId: slot, key: retryKey });
                 setMessage(result.message);
                 if (result.redirectTo)
-                  window.location.assign(result.redirectTo);
+                  router.push(result.redirectTo);
               } catch {
                 setMessage(
                   "The connection was interrupted. Retry this request to check whether it was saved.",
@@ -214,9 +184,7 @@ export function BookingForm({
                 {pending
                   ? "Submitting…"
                   : review
-                    ? demo
-                      ? "Submit sample request"
-                      : "Submit request"
+                    ? "Submit request"
                     : "Review request"}
               </Button>
               {review && (
@@ -255,11 +223,7 @@ export function BookingForm({
             Staff approval confirms your appointment. A queue ticket is issued
             only after staff check-in.
           </p>
-          {demo && (
-            <p className="caption">
-              Synthetic preview · no reservation is made.
-            </p>
-          )}
+
         </Card>
       </div>
     </div>

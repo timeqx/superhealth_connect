@@ -1,3 +1,4 @@
+import Form from "next/form";
 import { requireActor } from "@/server/session";
 import { Pagination, pageNumber } from "@/shared/ui/pagination";
 import { Button } from "@/shared/ui/button";
@@ -30,7 +31,7 @@ export default async function Appointments({ searchParams }: { searchParams: Pro
         issued at check-in.
       </PageTitle>
       <div className="visits-toolbar">
-        <form className="visits-filter"><label>Visit status<select name="status" defaultValue={status}><option value="">All visits</option>{states.map(s => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}</select></label><Button type="submit">Filter visits</Button></form>
+        <Form action="" scroll={false} className="visits-filter"><label>Visit status<select key={status} name="status" defaultValue={status}><option value="">All visits</option>{states.map(s => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}</select></label><Button type="submit">Filter visits</Button></Form>
         <ButtonLink href="/patient/book">Request an appointment</ButtonLink>
       </div>
       <div className="visit-list">

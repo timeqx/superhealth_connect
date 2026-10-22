@@ -15,7 +15,7 @@ const messages: Record<string, string> = {
   CONFLICT:
     "This record changed or the desk is busy. Refresh before making another change.",
   NOT_CONFIGURED:
-    "Online accounts are not connected yet. Please try again after the local Supabase setup is complete.",
+    "Online accounts are temporarily unavailable. Please try again later.",
 };
 export function safeError(error: unknown) {
   const message =

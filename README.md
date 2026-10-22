@@ -27,9 +27,8 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Without configuration, public pages and labelled
-`/preview/patient`, `/preview/booking`, `/preview/admin`, `/preview/queue` are available. Protected
-workspaces show setup guidance; there is no demo authentication bypass.
+Open http://localhost:3000. Demo routes and sample records have been removed.
+Without backend configuration, account and service pages show an unavailable message.
 
 ## Supabase setup
 
@@ -97,19 +96,9 @@ Optionally set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium binary.
 See the implementation checklist for precise results and remaining milestones.
 
 
-## UI preview and screenshots
-The redesigned UI uses the shared shadcn-compatible theme and labelled synthetic
-previews. `/preview/booking` exercises service, date/session, review and a pending
-receipt without saving an appointment. `/preview/queue` shows the five visual
-queue states, including disconnected updates. The staff preview demonstrates
-local-only queue transitions; the secure staff workspace retains real account
-review and read-only appointment requests.
-
-Run `npm run test:e2e` to capture screenshots and check 360, 390, 768 and 1440px.
-Screenshots live under `test-results/foundation-responsive-screens-do-not-overflow-*/`
-and `test-results/redesign-*/`. The runner uses a separate `.next-e2e` directory,
-port 3100 and empty Supabase configuration. See the implementation status for
-checks actually run and authenticated flows still awaiting acceptance.
+## UI checks
+`npm run test:e2e` checks public navigation, responsive layouts, unavailable-service
+states and removed preview routes. It uses port 3100 and empty Supabase configuration.
 
 ## Staff appointment review
 Signed-in staff can review pending requests at `/admin`, inspect the patient and
@@ -117,7 +106,7 @@ session, and approve or decline with confirmation. Declining requires an explana
 Approval changes the appointment to Scheduled; staff check-in and live queue UI
 remain pending. Decisions use the existing transactional RPC with stale-record
 protection and retry keys. Use synthetic accounts while authenticated acceptance
-checks remain outstanding. `/preview/admin` remains a read-only decision preview.
+checks remain outstanding. Demo staff views have been removed.
 
 ## Additional connected workflows
 - Patients can cancel or request a different session from **Manage appointment**.
@@ -140,3 +129,37 @@ See [operations setup](docs/OPERATIONS.md) for the notification email worker
 (`npm run email:worker`, read-only by default), its required credentials, and the
 isolated authenticated browser runner (`npm run test:e2e:auth`). These require
 external/local setup before delivery and authenticated acceptance can be verified.
+
+## Signup email verification
+Signup uses the default Supabase email verification link; no template editing is
+needed. Set `APP_URL` to the app origin and allow `APP_URL/auth/callback` in
+Supabase Authentication > URL Configuration > Redirect URLs.
+
+Open the email link in the same browser/profile that started signup (not Gmail's
+embedded browser). The callback verifies the session, saves validated signup
+details, and opens registration at QC ID upload, then password creation. The
+original signup tab detects that session when you return or while it is visible.
+Existing uploaded documents resume at password creation. Email verification does
+not approve the account; staff review remains separate.
+
+Default Confirm signup and Magic Link templates should retain their confirmation
+links. Local code-template overrides were removed. Password recovery keeps its
+existing callback. No hosted configuration or template was changed.
+
+Configure custom SMTP in Supabase Auth for public signup. The default sender only
+accepts project-team recipients and currently permits two emails per hour.
+See https://supabase.com/docs/guides/auth/auth-smtp. The optional notification
+worker and its API key do not configure Auth SMTP. No hosted settings were changed.
+
+Email failures log `[registration-email]` with code/status only. Check dashboard
+Auth logs for the same attempt. `email_address_not_authorized` means sender
+restrictions; `over_email_send_rate_limit` means a sending limit. For
+`unexpected_failure`, inspect SMTP or database-trigger failures before retrying.
+Do not share logs containing personal details or credentials.
+
+## Production runtime
+Run `npm run build`, then `npm start` with the deployment environment configured.
+`npm run dev` is for local development. No synthetic preview routes or sample
+booking paths are shipped. UI cleanup does not replace launch acceptance: center
+approval of privacy, retention, eligibility and operational policies and live
+acceptance checks remain necessary. See docs/IMPLEMENTATION_STATUS.md.

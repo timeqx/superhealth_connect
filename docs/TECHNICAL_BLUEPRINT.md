@@ -39,7 +39,7 @@ Official sources confirm the facility, but do not establish the live appointment
 ### Explicit design decisions
 
 1. Use verified email and password for MVP authentication. Phone is a contact field, not implicitly verified. SMS verification is a later integration with a provider and budget.
-2. Create the Auth identity before uploading the QC ID so Storage can enforce ownership. This changes the diagram's technical ordering while retaining verification and account review.
+2. Follow the user-confirmed signup order (22 October 2026): name → barangay → contact and email code → private QC ID → password → sign-in. Supabase email OTP establishes an identity and verified session during contact verification so the later upload has a secure owner; the patient sets their password only after upload.
 3. A patient may log in while awaiting review, but may not request appointments until approved. They may view their review status and submit inquiries.
 4. Require the diagram's QC ID for the prototype using synthetic files. Confirm acceptable alternatives, minors/guardian handling, and real-world eligibility before a live pilot.
 5. Pending requests reserve capacity. Rejected/cancelled requests release it. A missed review deadline must appear in the admin dashboard; requests are not silently approved.
@@ -77,7 +77,18 @@ Start with two application roles. Do not add a complex permission framework for 
 
 ### Registration
 
-Name + email + password → Supabase signup → email verification → profile and barangay → private QC ID upload → submit for review → pending review → approved or rejected with reason → correction and resubmission if necessary.
+Last name, first name, optional middle name → barangay (five choices or Others with manual entry) → phone and email → send/enter email verification code → save verified profile → private QC ID upload → verified email as username and password creation → registration complete → sign-in. Account review proceeds separately: pending → approved or rejected with reason → correction and resubmission if necessary.
+
+Email is the selected verification channel from the diagram's phone-or-email branch.
+Do not label the phone number verified. OTP verification creates the authenticated
+identity needed for private uploads before the password is set. Registration resumes
+from saved profile/document state after email verification. Unsaved pre-verification
+entries stay in component memory only; reloading those early steps starts over.
+User-editable signup metadata controls navigation only, never authorization, role,
+ownership or staff approval. Password completion checks verified patient identity
+and the owned submitted document on the server. Existing accounts keep their normal
+sign-in path. Supabase confirmation and magic-link email templates must include the
+OTP token; hosted template/SMTP setup is separate from local code changes.
 
 Middle name is optional. Normalize Philippine phone numbers to international format. Validate on the server as well as in the form. Store passwords only in Supabase Auth. Use generic authentication errors, rate limits and provider protections; a browser-only login-attempt counter is not a security control.
 
@@ -341,3 +352,12 @@ Reviewed 20 October 2026.
 7. Next.js Server and Client Components: https://nextjs.org/docs/app/getting-started/server-and-client-components — rendering and interactivity boundaries.
 
 Queue rules, data model, architecture, delivery phases and test targets are proposed engineering decisions derived for this project, not claims that the center already operates this way.
+
+### Signup email revision - 22 October 2026
+Latest user decision: use default email links, without custom template editing.
+The same-browser PKCE callback establishes the verified session, validates saved
+signup draft metadata and saves the owned profile through existing guards.
+Registration resumes at QC ID upload or password if a document is already submitted.
+The waiting original tab checks the server session on focus/visibility and every
+five seconds while visible. Email confirmation is not staff approval. Password
+recovery retains its callback path. Default sender restrictions still apply.

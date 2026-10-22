@@ -5,10 +5,11 @@ import { AppHeader } from "@/shared/ui/app-header";
 import { SessionHeader } from "@/shared/ui/session-header";
 import { Suspense } from "react";
 import { SnackbarProvider } from "@/shared/ui/snackbar";
+import { ContentTransition } from "@/shared/ui/content-transition";
 export const metadata: Metadata = {
   title: "SuperHealth Connect",
   description:
-    "Appointments and visit updates for Batasan Hills Super Health Center. Development prototype.",
+    "Appointments and visit updates for Batasan Hills Super Health Center.",
 };
 export default function RootLayout({
   children,
@@ -24,17 +25,12 @@ export default function RootLayout({
           <SessionHeader />
         </Suspense>
         <main id="main" className="container">
-          {children}
+          <ContentTransition excludeAuth>{children}</ContentTransition>
         </main>
         <footer className="footer">
-          <p>
-            Development prototype · Illustrative services and schedules, subject
-            to center confirmation.
-          </p>
           <Link href="/privacy">Privacy notice</Link>
           <Link href="/admin">Staff portal</Link>
-          <Link href="/preview/patient">Synthetic patient preview</Link>
-          <Link href="/preview/admin">Synthetic staff preview</Link>
+          <p>Batasan Hills Super Health Center</p>
         </footer>
         </SnackbarProvider>
       </body>

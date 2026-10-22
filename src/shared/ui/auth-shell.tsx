@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ContentTransition } from "./content-transition";
 import {
   HeartPulse,
   ShieldCheck,
@@ -37,11 +38,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </ul>
         <p className="caption">
           Batasan Hills Super Health Center
-          <br />
-          Development prototype · synthetic information only
+
         </p>
       </aside>
-      <div className="auth-content stack">{children}</div>
+      <ContentTransition className="auth-content stack">{children}</ContentTransition>
     </div>
   );
 }

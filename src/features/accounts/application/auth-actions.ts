@@ -4,6 +4,7 @@ import { credentialsSchema, registrationSchema } from "../domain/validation";
 import type { ActionResult } from "@/shared/lib/errors";
 import { safeError } from "@/shared/lib/errors";
 import { redirect } from "next/navigation";
+import { needsRegistration } from "../domain/registration";
 export async function authenticate(
   mode: string,
   input: { email: string; password: string; consent: boolean },
@@ -11,28 +12,7 @@ export async function authenticate(
   try {
     const client = await serverClient();
     const origin = process.env.APP_URL;
-    if (mode === "register") {
-      const parsed = registrationSchema.safeParse(input);
-      if (!parsed.success)
-        return { ok: false, message: parsed.error.issues[0].message };
-      if (!origin) throw new Error("NOT_CONFIGURED");
-      const { error } = await client.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: { emailRedirectTo: `${origin}/auth/callback` },
-      });
-      if (error)
-        return {
-          ok: false,
-          message:
-            "We couldn’t create your account. Check your details or try again later.",
-        };
-      return {
-        ok: true,
-        message:
-          "Check your email to verify your account, then sign in to complete your profile.",
-      };
-    }
+    if (mode === "register") return { ok: false, message: "Start patient registration at /register." };
     if (mode === "forgot") {
       const parsed = credentialsSchema.shape.email.safeParse(input.email);
       if (!parsed.success)
@@ -96,7 +76,7 @@ export async function authenticate(
     return {
       ok: true,
       message: "Signed in.",
-      redirectTo: role.role === "admin" ? "/admin" : "/patient",
+      redirectTo: role.role === "admin" ? "/admin" : needsRegistration(data.user.user_metadata) ? "/register" : "/patient",
     };
   } catch (error) {
     return { ok: false, message: safeError(error) };

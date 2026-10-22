@@ -25,11 +25,10 @@ export default async function Schedules({ searchParams }: { searchParams: Promis
           <nav aria-label="Session pages">{page > 1 && <Link href={`?page=${page - 1}`}>Previous &middot; </Link>}Page {page}{page * 20 < (slots.count ?? 0) && <Link href={`?page=${page + 1}`}> &middot; Next</Link>}</nav>
         </section>
       </div> },
-      { id: "services", label: "Services", content: <div className="stack">
-        <Card><h2>Add a service</h2><ServiceDefinition /></Card>
-        <h2>Service settings</h2>
-        {services.data.map(s => <Card key={s.id}><h3>{s.name}</h3><div className="service-edit-layout"><ServiceDefinition key={s.updated_at} service={s} /><OperationsForm service={s} /></div></Card>)}
-      </div> },
+      { id: "services", label: "Services", content: <WorkspaceTabs sidebar label="Choose a service" tabs={[
+        ...services.data.map(s => ({ id: s.id, label: s.name, content: <Card><h2>{s.name}</h2><div className="service-edit-layout"><section className="stack"><h3>Service details</h3><ServiceDefinition key={s.updated_at} service={s} /></section><section className="stack"><h3>Availability & requirements</h3><OperationsForm service={s} /></section></div></Card> })),
+        { id: "add-service", label: "+ Add a service", content: <Card className="form-panel"><h2>Add a service</h2><ServiceDefinition /></Card> },
+      ]} /> },
     ]} />
   </>;
 }

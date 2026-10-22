@@ -50,10 +50,8 @@ export function AdminRequestPanel({
 }
 export function RequestTable({
   requests,
-  live = false,
 }: {
   requests: StaffRequest[];
-  live?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const filtered = requests.filter((r) =>
@@ -117,7 +115,7 @@ export function RequestTable({
                         Staff approval is required before this appointment is
                         scheduled.
                       </p>
-                      {live && r.updated_at && r.status === "pending" ? <AppointmentDecision key={`${r.id}:${r.updated_at}`} id={r.id} expected={r.updated_at} /> : <p className="notice">{live ? "This request cannot be reviewed from the current snapshot. Refresh to load its latest status." : "Synthetic preview · read-only. No appointment decision is performed here."}</p>}
+                      {r.updated_at && r.status === "pending" ? <AppointmentDecision key={`${r.id}:${r.updated_at}`} id={r.id} expected={r.updated_at} /> : <p className="notice">This request cannot be reviewed from the current snapshot. Refresh to load its latest status.</p>}
                     </AdminRequestPanel>
                   </td>
                 </tr>

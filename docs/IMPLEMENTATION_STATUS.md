@@ -433,3 +433,167 @@ end-to-end acceptance. The application is still partial, not pilot-ready.
   isolated local instance. Private staff layouts, sender queries and successful
   authenticated action feedback still need browser acceptance. Figma fidelity
   remains unverified. No migration or live database mutation was performed.
+
+## Focused forms and service navigation — 22 October 2026
+- Service settings now show one service at a time with an accessible vertical tab
+  list on the left and a separate Add a service tab. Mounted inactive panels keep
+  unsaved input when switching tabs. On narrow screens the bounded service list
+  sits above the editor; keyboard navigation follows the vertical tab pattern.
+- History, reports, audit and staff booking search share full-width, single-row
+  desktop filter controls with their action button. Small screens wrap controls
+  when necessary to preserve usable inputs and avoid page overflow.
+- Shared forms and operational editors use fluid widths with centered maximum
+  widths. Service details and availability are labelled separately and adapt to
+  the available width. Staff booking uses the shared centered form layout.
+- Passed: lint, typecheck, 21 unit tests and four responsive browser checks at
+  360/390/768/1440px. Browser checks cover public/preview routes, not authenticated
+  service-tab interactions. Screenshot capture emitted caret-style hydration
+  warnings. Production build also passed.
+- Authenticated browser acceptance remains blocked by absent E2E_SUPABASE_URL;
+  unsaved-state preservation and private filter layouts need browser acceptance.
+  Figma admin-node metadata was readable; pixel fidelity was not verified. The
+  existing implemented design and requested layout changes guide this update.
+
+## Patient signup flowchart routing — 22 October 2026
+- Replaced password-first registration with Name (last/first/optional middle) →
+  Barangay (five choices plus manual Others) → Contact and email OTP → private QC
+  ID upload → verified email/password → registration-complete sign-in screen.
+- Email OTP establishes the upload owner's session. Phone remains an unverified
+  contact number. Incorrect/expired codes keep the verification step available;
+  resend/change-email and Back preserve entries in component memory.
+- Server actions validate profile/consent, verified email ownership and patient
+  role; password completion also reads the actual owned document. Review status
+  remains authoritative and registration does not grant appointment approval.
+- Saved profile/document state determines resumed steps. Navigation-only metadata
+  tracks the new signup flow; it is never used for roles, RLS or review approval.
+  Existing accounts keep normal sign-in. New unfinished registrations return to
+  the wizard; rejected submissions route to the existing correction workflow.
+- Removed the old password-first signup action. Added local confirmation/magic-link
+  OTP templates and hosted Auth SMTP/template instructions in README/.env.example.
+  No hosted configuration, database migration, account or email was changed/sent.
+- Added server-action tests for invalid OTP, email ownership, profile overwrite,
+  missing document, role/session, password matching and uncertain password retries;
+  added browser coverage for step ordering, Back, Others and disconnected gating.
+- Passed: lint, typecheck, production build, 32 unit/server-action tests and 19
+  embedded PostgreSQL regression tests. All four public/preview overflow checks
+  passed; four signup browser checks passed at 360/390/768/1440px after correcting
+  test selectors that included select-option text in labels. The initial combined
+  browser run was interrupted after those selector failures; the signup subset
+  was rerun successfully. Screenshot capture emitted caret-style hydration warnings.
+- Real email delivery, OTP
+  exchange, private upload and password sign-in still need isolated authenticated
+  acceptance; E2E_SUPABASE_URL is not configured. Unsaved pre-verification entries
+  are not persisted across reloads. Hosted OTP templates/SMTP remain operator setup.
+
+## Persistent layouts and smooth navigation — 22 October 2026
+- Sign-in, signup, forgot-password and reset-password now share the `(auth)` route
+  group layout. URLs are unchanged. The left information panel stays mounted;
+  only the right-side form changes, including a local loading state.
+- Replaced full-document redirects after auth/signup/booking with router navigation.
+  Auth changes refresh session-dependent UI through React reconciliation. Snackbars
+  persist in the root provider; removed the old sessionStorage reload workaround.
+- Patient visit and staff history/audit/report/booking-search filters use Next Form
+  for client-side GET navigation without scrolling to the top. Controls synchronize
+  with URL filters, including browser history. Internal forgot-password and audit
+  links now use Next Link. Downloads and private document responses remain native.
+- A reusable, unkeyed content wrapper animates page/form changes for 180ms without
+  remounting children. Auth routes animate only the form panel. Signup step changes
+  also animate; query-only refreshes do not restart page animation. Reduced-motion
+  preferences disable these animations. Stable auth-panel height reduces jumps.
+- Passed: full lint, typecheck, 32 unit/server-action tests, production build and
+  16 selected browser checks across 360/390/768/1440px. Tests cover shared DOM-node
+  preservation, no document navigation through auth/public links, browser Back,
+  reduced motion, signup ordering and responsive overflow. Initial typecheck found
+  stale generated E2E route types after moving files; regenerated by the browser
+  test server, and subsequent typecheck/build passed. Screenshot capture still
+  emitted caret-style hydration warnings; DOM-preservation assertions were changed
+  to compare element references without modifying hydrated markup.
+- Authenticated filter navigation, successful login/logout header refresh and real
+  signup completion still need isolated authenticated browser acceptance. No live
+  database, auth setting or credential changes were made.
+
+## Compact auth panels and page spacing — 22 October 2026
+- Signup and both password-recovery forms use a minimal top-right back-arrow link
+  with an accessible Back to sign in label, visible focus and a 44px target.
+- Reduced shared header/content spacing to 24px on desktop and 16px on mobile;
+  tightened page titles and section gaps. Auth panels use smaller padding and
+  typography, no forced 620px minimum height, and compact form/progress spacing.
+- Shortened signup introduction. The first signup step including Continue fits
+  within the checked 360x800 viewport; footer content can still scroll. Long steps,
+  errors, zoom and virtual keyboards remain naturally scrollable without clipping.
+- Passed: lint, typecheck, 32 unit tests, production build and 12 selected browser
+  checks. After final text/spacing refinement, production build and four responsive
+  overflow checks passed again. Reviewed the final mobile signup screenshot.
+  Existing screenshot caret-style hydration warnings remain. Private authenticated
+  pages and later authenticated signup steps were not browser-verified.
+
+## Supabase built-in verification links — 22 October 2026
+- Supersedes the numeric-code signup configuration above. Signup now requests a
+  Supabase Auth email link with an explicit trusted APP_URL/auth/callback redirect.
+  Removed numeric-code entry/action/schema and custom local email templates.
+- New-user draft profile fields are validated and stored as Auth metadata for
+  prefilling the confirmation step after the email callback; metadata never grants
+  roles, ownership or review approval. Patient reconfirms details before saving.
+- No Resend API is used for signup. Hosted custom SMTP and templates were not
+  changed; README documents restoring default templates/sender if customized.
+- Passed: typecheck, lint, 31 unit/server-action tests and production build.
+  Actual email delivery and callback-to-upload acceptance remain unverified.
+- Four disconnected signup browser checks also passed at mobile/tablet/desktop sizes.
+
+## Stable auth loading panel — 22 October 2026
+- Auth form panel now reserves 660px on desktop/tablet and 640px on narrow phones
+  during loading and navigation. Longer forms scroll inside the panel; safe center
+  alignment keeps the top accessible. Stable scrollbar space prevents width jumps.
+- Replaced loading text with title, field and button skeletons. Screen readers get
+  one loading status; decorative placeholders are hidden. Reduced motion disables
+  the existing skeleton pulse animation.
+- Passed: lint, typecheck, 31 unit tests and production build. Browser navigation
+  assertions now check equal panel heights across sign-in, signup and recovery.
+- All 12 selected browser checks passed across four viewport sizes, including stable panel heights, reduced motion and signup navigation.
+
+## Production interface cleanup � 22 October 2026
+
+Removed public synthetic preview routes and their booking/queue components,
+simulated booking submission, sample landing appointment, hardcoded proposed
+landing services, preview navigation, developer notices, and technical setup copy.
+The service directory now uses published records only, with an unavailable state
+when backend configuration is missing. The Next.js development indicator is off.
+Registration and privacy copy now describe the patient workflow; operator setup
+and launch caveats remain in documentation. Existing in-progress changes preserved
+on `feat/healthcare-ui-redesign`.
+
+Validation: lint, typecheck, production build, 31 unit tests and 19 embedded
+PostgreSQL tests passed. Browser checks using installed Chrome recorded 32 passes;
+four signup checks initially expected the old unavailable message, then all four
+passed on a focused rerun after updating that assertion. Both browser runs hung
+at shutdown and were interrupted after test output; no clean full-suite exit is
+claimed. The bundled Playwright browser was missing. A screenshot-time hydration
+warning about caret styling was observed. Mobile landing screenshot inspected.
+Stale generated preview-route validation was removed before successful typecheck
+and build. No deployment or live migration.
+Launch remains pending center approval of privacy/retention/deletion terms and
+operational policy, plus the live acceptance checks recorded above. This copy
+change is not evidence of legal approval or authenticated production acceptance.
+
+### Compact login — 22 October 2026
+Reduced login spacing, recovery-link text, and first-visit card padding/type. Kept the recovery link's 44px tap target. Browser measurements confirm no internal auth-panel overflow at 360, 390, 768 and 1440px widths. Lint, typecheck, 31 unit tests and production build passed. Other authentication screens retain their shared panel sizing.
+
+### Signup email diagnostics — 22 October 2026
+Replaced the generic verification-email failure with code-specific messages and code/status-only server diagnostics. Disabled Next.js server-function argument logging to avoid exposing registration details. Corrected SMTP guidance: public recipients require custom Auth SMTP; the built-in sender is team-only and rate-limited. 35 unit tests, including four provider-error regressions, passed; typecheck passed. No live email sent or hosted setting changed. Exact reported delivery failure remains unconfirmed until the provider code or dashboard Auth logs are available.
+Production build also passed for the signup email diagnostic change.
+
+### Same-page signup email code - 22 October 2026
+Added send-code, verify-and-continue, resend and change-email controls. Server Auth
+verification precedes owned profile persistence and QC ID upload. Added local
+email templates and hosted setup instructions. 39 tests, typecheck, lint and build
+passed. Hosted templates were not changed; live code delivery and authenticated
+browser flow remain unverified. No live email sent. README encoding-write failure
+was repaired from tracked content plus current production and email revisions.
+
+### Restore email-link registration - 22 October 2026
+Supersedes code-entry work. Restored default email links, callback draft persistence
+and QC ID/password continuation, plus visible-tab/focus server-session checks.
+Removed OTP UI/action and local code-template overrides. Hosted settings unchanged.
+Live same-browser email callback and cross-tab behavior remain unverified.
+Validation: 38 unit tests, typecheck and lint passed. Production build is being checked; hosted email behavior has not been exercised.
+Production build passed for the restored email-link flow.

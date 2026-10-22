@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
@@ -8,7 +7,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { ButtonLink } from "@/shared/ui/components";
-import { ServiceCard, VisitPreview } from "@/shared/ui/care-components";
+import { QuickActions } from "@/shared/ui/care-components";
 export default function Home() {
   return (
     <>
@@ -40,46 +39,7 @@ export default function Home() {
             <span>Private account. Clear updates. Care closer to home.</span>
           </div>
         </div>
-        <VisitPreview />
-      </section>
-      <section className="services-section stack">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">HERE FOR YOU, AT EVERY STAGE</p>
-            <h2>Everyday care. Thoughtfully connected.</h2>
-          </div>
-          <Link className="text-link" href="/services">
-            View all services <ArrowRight size={17} />
-          </Link>
-        </div>
-        <div className="grid-three">
-          {[
-            [
-              "Maternal & child care",
-              "Support for mothers, little ones, and growing families.",
-            ],
-            ["Immunizations", "Plan ahead for available vaccination services."],
-            [
-              "Screening services",
-              "Take the next step toward understanding your health.",
-            ],
-          ].map(([name, description], i) => (
-            <ServiceCard
-              key={name}
-              name={name}
-              description={description}
-              index={[0, 4, 6][i]}
-            >
-              <Link className="text-link" href="/services">
-                Explore service <ArrowRight size={16} />
-              </Link>
-            </ServiceCard>
-          ))}
-        </div>
-        <p className="caption">
-          Proposed services. Availability and requirements are subject to center
-          confirmation.
-        </p>
+        <QuickActions />
       </section>
       <section className="how-section">
         <div>
@@ -128,8 +88,8 @@ export default function Home() {
           <p className="eyebrow">YOUR COMMUNITY HEALTH CENTER</p>
           <h2>Batasan Hills, Quezon City</h2>
           <p>
-            Visit details, service hours, and contact information will be
-            published once confirmed by the center.
+            For questions about service hours, requirements, or your visit,
+            send an inquiry to the center.
           </p>
         </div>
         <ButtonLink href="/patient/inquiries" secondary>

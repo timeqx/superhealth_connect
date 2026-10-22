@@ -3,7 +3,6 @@ import {
   Baby,
   CalendarDays,
   Check,
-  Clock3,
   HeartHandshake,
   MapPin,
   ShieldCheck,
@@ -60,20 +59,18 @@ export function AppointmentCard({
   startsAt,
   status,
   reason,
-  sample = false,
 }: {
   reference: string;
   service: string;
   startsAt?: string;
   status: string;
   reason?: string | null;
-  sample?: boolean;
 }) {
   return (
     <Card className="appointment-card">
       <div className="row">
         <span className="eyebrow">
-          {sample ? "ILLUSTRATIVE VISIT" : "YOUR APPOINTMENT"}
+          YOUR APPOINTMENT
         </span>
         <AppointmentStatusBadge status={status} />
       </div>
@@ -97,7 +94,7 @@ export function AppointmentCard({
         <span>
           Reference <strong>{reference}</strong>
         </span>
-        <span>{sample ? "Synthetic sample" : "Personal visit"}</span>
+        <span>Personal visit</span>
       </div>
       {reason && <p className="notice">{reason}</p>}
       {status === "pending" && (
@@ -128,33 +125,6 @@ export function BookingStepper({ step }: { step: number }) {
         </li>
       ))}
     </ol>
-  );
-}
-export function VisitPreview() {
-  return (
-    <div className="visit-preview">
-      <div className="row preview-heading">
-        <span className="eyebrow">YOUR VISIT, AT A GLANCE</span>
-        <span className="sample-label">Sample</span>
-      </div>
-      <AppointmentCard
-        sample
-        reference="DEMO-0042"
-        service="Immunizations"
-        startsAt="2026-10-21T01:00:00Z"
-        status="scheduled"
-      />
-      <div className="preview-queue glass-surface">
-        <span className="icon-tile">
-          <Clock3 size={21} />
-        </span>
-        <div>
-          <strong>Arrive. Check in. Stay informed.</strong>
-          <p>Your queue starts with staff check-in.</p>
-        </div>
-        <ArrowUpRight size={20} />
-      </div>
-    </div>
   );
 }
 export function QuickActions() {

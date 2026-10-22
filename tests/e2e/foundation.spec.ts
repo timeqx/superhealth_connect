@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-test("public navigation, previews, and no-configuration guard", async ({
+test("public navigation and no-configuration guard", async ({
   page,
 }) => {
   await page.goto("/");
@@ -11,14 +11,12 @@ test("public navigation, previews, and no-configuration guard", async ({
     .first()
     .click();
   await expect(
-    page.getByRole("heading", { name: "Family Planning", exact: true }),
+    page.getByRole("heading", { name: "Care for every stage of life", exact: true }),
   ).toBeVisible();
-  await page.goto("/preview/patient");
-  await expect(page.getByText(/Synthetic design preview/)).toBeVisible();
   await page.goto("/admin");
   await expect(
     page.getByRole("heading", {
-      name: "Online accounts are not connected yet",
+      name: "Online accounts are temporarily unavailable",
     }),
   ).toBeVisible();
 });
@@ -29,7 +27,7 @@ test("account review routes cannot become demo access", async ({
   await page.goto("/admin/reviews");
   await expect(
     page.getByRole("heading", {
-      name: "Online accounts are not connected yet",
+      name: "Online accounts are temporarily unavailable",
     }),
   ).toBeVisible();
   const response = await request.get(
@@ -45,10 +43,6 @@ test("responsive screens do not overflow", async ({ page }) => {
     "/services",
     "/sign-in",
     "/register",
-    "/preview/patient",
-    "/preview/admin",
-    "/preview/queue",
-    "/preview/booking",
   ]) {
     await page.goto(path);
     expect(
@@ -74,7 +68,7 @@ test("sign in reports missing configuration without inventing a session", async 
   await page.getByLabel("Password", { exact: true }).fill("synthetic-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   const snackbar = page.locator(".snackbar");
-  await expect(snackbar).toContainText("not connected");
+  await expect(snackbar).toContainText("temporarily unavailable");
   const bounds = await snackbar.boundingBox();
   expect(bounds!.x).toBeLessThan(50);
   expect(bounds!.y).toBeGreaterThan(page.viewportSize()!.height / 2);

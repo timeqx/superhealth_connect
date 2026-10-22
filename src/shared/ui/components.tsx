@@ -50,13 +50,12 @@ export function PageTitle({
 export function SetupNotice() {
   return (
     <Card>
-      <h2>Online accounts are not connected yet</h2>
+      <h2>Online accounts are temporarily unavailable</h2>
       <p>
-        This local application needs Supabase configuration before you can sign
-        in or access records. No appointment has been created.
+        Please try again later or contact the center for help with your visit.
       </p>
-      <ButtonLink href="/preview/patient" secondary>
-        Explore the synthetic preview
+      <ButtonLink href="/" secondary>
+        Return home
       </ButtonLink>
     </Card>
   );
