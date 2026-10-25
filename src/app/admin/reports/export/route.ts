@@ -15,7 +15,6 @@ export async function GET(request: Request) {
     if (results.some(r => r.error)) throw new Error("REPORT_UNAVAILABLE");
     const total = results.reduce((n, r) => n + (r.count ?? 0), 0);
     const rows = [["from_manila", "through_manila", "cohort", "current_status", "requests", "total_requests"], ...states.map((s, i) => [from, to, "request_submission_date", s, String(results[i].count ?? 0), String(total)])];
-    // Only validated dates, fixed labels and numeric aggregates enter this file.
     const csv = rows.map(row => row.map(cell => `"${cell.replaceAll('"', '""')}"`).join(",")).join("\r\n");
     return new Response(csv, { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="request-outcomes-${from}-${to}.csv"` } });
   } catch { return new Response("The report could not be exported. Please retry.", { status: 503, headers }); }

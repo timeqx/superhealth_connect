@@ -1,5 +1,4 @@
 import { defineConfig } from "@playwright/test";
-// Deliberately use explicit test variables, never the application's hosted credentials.
 const url = process.env.E2E_SUPABASE_URL;
 if (!url || !["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname)) throw new Error("Authenticated E2E requires E2E_SUPABASE_URL pointing to an isolated local Supabase instance.");
 for (const key of ["E2E_SUPABASE_KEY", "E2E_PATIENT_EMAIL", "E2E_PATIENT_PASSWORD", "E2E_STAFF_EMAIL", "E2E_STAFF_PASSWORD"]) {

@@ -1,4 +1,3 @@
--- No live policies/schedules are inferred from the prototype.
 create schema if not exists private;
 revoke all on schema private from public, anon, authenticated;
 grant usage on schema private to authenticated;
@@ -111,7 +110,6 @@ create table public.audit_logs (
   action text not null, entity_type text not null, entity_id uuid not null, metadata jsonb not null default '{}',
   created_at timestamptz not null default now()
 );
--- Mutation receipts make retries safe even after a subsequent transition.
 create table private.operation_receipts (
   actor_id uuid not null, key uuid not null, payload jsonb not null, result jsonb not null,
   created_at timestamptz not null default now(), primary key(actor_id,key)
@@ -180,7 +178,6 @@ create policy published_messages on public.inquiry_messages for select to authen
 );
 create policy own_notifications on public.notifications for select to authenticated using (recipient_id=auth.uid() and private.is_active());
 create policy staff_audit on public.audit_logs for select to authenticated using (private.is_admin());
--- No user policies or grants for outbox, receipts, role writes, or direct domain writes.
 revoke execute on all functions in schema private from public,anon,authenticated;
 grant execute on function private.is_admin(), private.is_active() to authenticated,anon;
 grant usage on schema private to anon;

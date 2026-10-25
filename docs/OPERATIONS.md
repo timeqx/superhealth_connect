@@ -45,7 +45,7 @@ leave this unset until the center approves a deadline.
 The local migration `20261021064654_staff_management.sql` adds protected service
 definition, draft editing, staff booking and duration-report RPCs, plus staff
 Realtime table publications. Apply through the normal reviewed migration workflow
-before using those features. This implementation did not apply it to hosted data.
+before using those features.
 
 Reference: [Supabase Postgres Changes](https://supabase.com/docs/guides/realtime/postgres-changes).
 
@@ -61,7 +61,7 @@ an operator credential, never a browser key. Preserve TLS certificate validation
 `npm run test:email` checks provider failure/retry behavior offline without sending
 mail or connecting to a database. This does not verify provider deliverability.
 Run this command from an operator-controlled scheduler every minute after setup
-and delivery acceptance; this change does not configure any scheduler or send mail.
+and delivery acceptance.
 
 Workers claim rows atomically with SKIP LOCKED, use a two-minute lease, a 15-second
 provider timeout, and a stable provider idempotency key. Retries use exponential

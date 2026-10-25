@@ -1,4 +1,3 @@
--- Local implementation only: apply through the controlled migration workflow.
 create function public.save_service_definition(p_id uuid,p_name text,p_slug text,p_description text,p_expected timestamptz,p_key uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare s public.services; payload jsonb; result jsonb;
@@ -63,8 +62,6 @@ begin
 end $$;
 revoke all on function public.staff_request_appointment(uuid,uuid,text,uuid) from public,anon;
 grant execute on function public.staff_request_appointment(uuid,uuid,text,uuid) to authenticated;
-
--- Existing SELECT policies determine which events each authenticated subscriber sees.
 alter publication supabase_realtime add table public.appointments, public.queue_tickets, public.inquiries, public.inquiry_messages;
 
 create index appointments_requested_at on public.appointments(requested_at);

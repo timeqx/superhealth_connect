@@ -29,7 +29,6 @@ export async function GET(
     .maybeSingle();
   if (error || !data)
     return new NextResponse("Document unavailable", { status: 404, headers });
-  // Signing uses the staff session and Storage RLS, never the privileged key.
   const { data: link, error: linkError } = await actor.client.storage
     .from("verification")
     .createSignedUrl(data.storage_path, 60, {

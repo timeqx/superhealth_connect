@@ -1,4 +1,3 @@
--- Draft catalog only. No people, documents, capacity, or facility policy are seeded.
 insert into public.services(slug,name,description) values
 ('maternal-child-care','Maternal & Child Care','Support for mothers and growing families.'),
 ('family-planning','Family Planning','Plan a visit to discuss family planning services.'),

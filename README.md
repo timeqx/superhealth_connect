@@ -1,165 +1,103 @@
 # SuperHealth Connect
 
-A responsive appointment, service and queue website planned for Batasan Hills Super Health Center.
+Appointment scheduling and queue management for Batasan Hills Super Health Center.
+Built with Next.js, React, TypeScript and Supabase.
 
-**Status:** foundation, private verification uploads and staff account review implemented.
-Live authenticated acceptance testing, staff appointment operations and the live queue
-remain incomplete. Use synthetic data only.
+## Local development
 
-## Start here
-- [Codex / VS Code handoff](docs/CODEX_HANDOFF.md)
-- [Technical blueprint](docs/TECHNICAL_BLUEPRINT.md)
-- [Figma screen map and design guidance](docs/FIGMA_DESIGN.md)
-- [Implementation checklist](docs/IMPLEMENTATION_STATUS.md)
-- [Agent instructions](AGENTS.md)
-- [Original flowchart](docs/SuperHealth-Connect-Flowchart.pdf)
-- [Open Figma prototype](https://www.figma.com/design/cL2gR8UAocta9ZRHmejlra)
-
-## Stack
-Next.js App Router, React, TypeScript, shadcn/ui and Supabase (Auth, PostgreSQL,
-private Storage and Realtime). Shared shadcn components live in `src/shared/ui`;
-`components.json` configures future additions using the project's theme.
-
-## Run locally
 Requires Node.js 22.12 or newer.
+
 ```sh
 npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Demo routes and sample records have been removed.
-Without backend configuration, account and service pages show an unavailable message.
+Open http://localhost:3000. In PowerShell, use `npm.cmd` if script execution is restricted.
 
-## Supabase setup
+Copy `.env.example` to `.env.local` and configure these values. Keep an existing
+`.env` if it already contains your configuration; `.env.local` takes precedence.
 
-1. Install Supabase CLI and a supported local Docker-compatible runtime.
-2. Run `supabase start`, then `supabase db reset` **only against this disposable
-   local project** to apply migrations and draft catalog seeds.
-3. Copy `.env.example` to `.env.local`, fill the local URL and publishable key
-   from `supabase status`, and retain `APP_URL=http://localhost:3000`.
-4. Restart Next.js. Local verification emails appear in Inbucket on port 54324.
-5. Keep email confirmation enabled and configure the callback URLs from
-   `supabase/config.toml`. Use synthetic accounts only.
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public application key |
+| `SUPABASE_SECRET_KEY` | Server-only key for private verification uploads |
+| `APP_URL` | Application origin; `http://localhost:3000` locally |
+| `STAFF_DATABASE_URL` | Operator connection for staff provisioning |
+| `EMAIL_DATABASE_URL` | Notification worker database connection |
+| `RESEND_API_KEY` | Notification email provider key |
+| `EMAIL_FROM` | Verified notification sender |
+| `APPOINTMENT_REVIEW_HOURS` | Optional review deadline; blank disables overdue alerts |
+| `TEST_DATABASE_URL` | Optional disposable local test database |
 
-For an existing hosted project, use its URL and publishable key in your ignored
-`.env` or `.env.local`, and configure Auth redirect URLs for your application.
-The application requires all four SQL migrations and the private `verification`
-bucket. A connection alone does not install the schema. Do not run a local reset
-against a hosted database. Hosted migrations require a separate operator step.
+Restart the server after changing environment variables. Without Supabase configuration,
+account and service pages display an unavailable message. Keep secret keys and database
+connections server-side; never commit environment files.
 
-Set `SUPABASE_SECRET_KEY` for server-side private uploads; never prefix it with
-`NEXT_PUBLIC_`. The bucket denies browser uploads. The server checks the signed-in
-patient, profile state, file size, extension and JPEG/PNG/PDF signature before
-uploading. Signature checks are not malware scanning or full document parsing.
-Save a profile, submit a synthetic document, then review it at `/admin/reviews`
-using a staff account. Review links expire after 60 seconds. Rejections require
-correction instructions; resubmissions create a new document version.
+## Database and authentication
 
-Provision an existing email-confirmed synthetic account with an operator PostgreSQL
-connection in `STAFF_DATABASE_URL` (not required by the app):
+For a local Supabase instance, install the Supabase CLI and a Docker-compatible runtime:
 
 ```sh
-npm run staff:provision -- --user USER-UUID --employee STAFF-001 --operator local-developer
+supabase start
+supabase db reset
+supabase status
 ```
 
-This defaults to a dry run. Add `--apply` only when you intend to change the
-configured database. The script records an audit entry. Staff use normal sign-in
-and are directed to `/admin`; roles never come from signup metadata. Disable staff
-with `user_roles.disabled_at`. No staff account was provisioned by this implementation.
+Run `db reset` only against a disposable local database. It applies the migrations
+and draft service catalog in `supabase/`. Use the local URL and keys from `supabase status`.
+Local verification emails are available on port 54324.
 
-An upload whose database submission fails may leave a private, unreferenced object.
-Retries reconcile committed submissions without deleting a possibly committed file.
-Operator reconciliation/retention automation remains pending.
+An existing hosted project needs all migrations in `supabase/migrations/`, including
+the private `verification` storage bucket. Apply hosted migrations through your database
+release process. Service seeds are unpublished; staff must configure services and sessions.
 
-All seven seed services are unpublished and not bookable. Confirm services,
-requirements and future Manila sessions before configuring availability.
-A hosted connection and private bucket were checked read-only during development.
-No live migration or application-data write was performed by the implementation agent.
+Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
+URLs and configure Auth SMTP for signup and password recovery. Verification links must
+open in the same browser profile that started registration. Email verification and staff
+account approval are separate steps.
 
-## Checks
+To provision an existing email-confirmed staff account, configure `STAFF_DATABASE_URL`:
+
+```sh
+npm run staff:provision -- --user USER-UUID --employee STAFF-001 --operator OPERATOR
+```
+
+The command defaults to a dry run. Add `--apply` to save the role and audit entry.
+Staff sign in through the regular sign-in page.
+
+## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run build` / `npm start` | Production build / local production server |
-| `npm run lint` | ESLint, warnings fail |
-| `npm run typecheck` | Route types and TypeScript |
-| `npm test` | Domain and validation tests |
-| `npm run test:db` | Embedded PostgreSQL migrations/RLS/workflow tests |
-| `npx playwright install chromium` | Browser test runtime |
-| `npm run test:e2e` | Public/disconnected UI at 360, 768 and 1440px |
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm start` | Production server |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Route types and TypeScript validation |
+| `npm test` | Application unit tests |
+| `npm run test:db` | Database workflow and authorization tests |
+| `npm run test:email` | Notification delivery tests |
+| `npm run test:e2e` | Public browser tests |
+| `npm run test:e2e:auth` | Authenticated local browser tests |
 | `npm run db:types` | Generate types from local Supabase |
+| `npm run email:worker` | Inspect notification delivery status |
 
-Database tests use PGlite with minimal Auth and Storage table stubs. They do not prove
-multi-connection concurrency, Supabase Storage, Auth emails, or Realtime.
-Generated database types await a running local Supabase environment.
-Optionally set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium binary.
-See the implementation checklist for precise results and remaining milestones.
+Install the browser runtime with `npx playwright install chromium` before running
+browser tests. Database tests use embedded PostgreSQL with Auth and Storage stubs;
+they do not verify hosted services or simultaneous database connections. Use test
+accounts and documents for development.
 
+## Project layout
 
-## UI checks
-`npm run test:e2e` checks public navigation, responsive layouts, unavailable-service
-states and removed preview routes. It uses port 3100 and empty Supabase configuration.
+- `src/app`: routes, layouts and pages.
+- `src/features`: account, appointment, queue, inquiry and staff workflows.
+- `src/shared`: shared UI, utilities and Supabase clients.
+- `src/server`: session and server-action helpers.
+- `supabase`: schema migrations, seeds and database tests.
+- `scripts`: staff provisioning and notification delivery.
+- `tests`: browser tests.
 
-## Staff appointment review
-Signed-in staff can review pending requests at `/admin`, inspect the patient and
-session, and approve or decline with confirmation. Declining requires an explanation.
-Approval changes the appointment to Scheduled; staff check-in and live queue UI
-remain pending. Decisions use the existing transactional RPC with stale-record
-protection and retry keys. Use synthetic accounts while authenticated acceptance
-checks remain outstanding. Demo staff views have been removed.
-
-## Additional connected workflows
-- Patients can cancel or request a different session from **Manage appointment**.
-- Staff use `/admin/queue` for arrivals, check-in and service queue transitions.
-- Checked-in patients see their own queue on `/patient/appointments`, refreshed
-  every 15 seconds while visible, with immediate refresh on their own notification events.
-- Staff use `/admin/inquiries` for private drafts and published replies; patients
-  can follow up from their inquiry threads.
-These adapters use existing database functions; signed-in browser and hosted
-acceptance testing remains outstanding. See IMPLEMENTATION_STATUS.md for all
-remaining MVP work; these changes do not finish the whole application.
-
-## Operations continuation
-
-Staff services/schedules are at `/admin/schedules`; request reports and recent
-audit activity are at `/admin/reports`. Patient notifications are at
-`/patient/notifications`, with private Realtime refresh and polling fallback.
-
-See [operations setup](docs/OPERATIONS.md) for the notification email worker
-(`npm run email:worker`, read-only by default), its required credentials, and the
-isolated authenticated browser runner (`npm run test:e2e:auth`). These require
-external/local setup before delivery and authenticated acceptance can be verified.
-
-## Signup email verification
-Signup uses the default Supabase email verification link; no template editing is
-needed. Set `APP_URL` to the app origin and allow `APP_URL/auth/callback` in
-Supabase Authentication > URL Configuration > Redirect URLs.
-
-Open the email link in the same browser/profile that started signup (not Gmail's
-embedded browser). The callback verifies the session, saves validated signup
-details, and opens registration at QC ID upload, then password creation. The
-original signup tab detects that session when you return or while it is visible.
-Existing uploaded documents resume at password creation. Email verification does
-not approve the account; staff review remains separate.
-
-Default Confirm signup and Magic Link templates should retain their confirmation
-links. Local code-template overrides were removed. Password recovery keeps its
-existing callback. No hosted configuration or template was changed.
-
-Configure custom SMTP in Supabase Auth for public signup. The default sender only
-accepts project-team recipients and currently permits two emails per hour.
-See https://supabase.com/docs/guides/auth/auth-smtp. The optional notification
-worker and its API key do not configure Auth SMTP. No hosted settings were changed.
-
-Email failures log `[registration-email]` with code/status only. Check dashboard
-Auth logs for the same attempt. `email_address_not_authorized` means sender
-restrictions; `over_email_send_rate_limit` means a sending limit. For
-`unexpected_failure`, inspect SMTP or database-trigger failures before retrying.
-Do not share logs containing personal details or credentials.
-
-## Production runtime
-Run `npm run build`, then `npm start` with the deployment environment configured.
-`npm run dev` is for local development. No synthetic preview routes or sample
-booking paths are shipped. UI cleanup does not replace launch acceptance: center
-approval of privacy, retention, eligibility and operational policies and live
-acceptance checks remain necessary. See docs/IMPLEMENTATION_STATUS.md.
+See [operations](docs/OPERATIONS.md) for staff workflows, email delivery and authenticated
+test setup. Production use requires authentication, private upload, delivery and concurrency
+acceptance checks, plus center approval of service policies and privacy practices.

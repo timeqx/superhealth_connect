@@ -52,9 +52,6 @@ begin
   perform private.notify(a.patient_id,'request:'||a.id,'appointment_requested','appointment',a.id,false);
   return private.receipt(p_key,v_payload,to_jsonb(a));
 end $$;
-
--- All capacity-changing paths lock sorted slots, then queue session (if present),
--- then appointment/ticket. Re-read slot_id after locking to detect concurrent moves.
 create function public.change_appointment(
   p_id uuid,p_action text,p_key uuid,p_expected timestamptz,
   p_reason text default null,p_target uuid default null
@@ -124,7 +121,6 @@ begin
   select slot_id into v_old_slot from public.appointments where id=p_id;
   if not found then raise exception 'VALIDATION_ERROR'; end if;
   select * into s from public.service_slots where id=v_old_slot for update;
-  -- Capacity lock also serializes check-in vs cancellation/reschedule for this appointment.
   insert into public.queue_sessions(service_id,service_date) values(s.service_id,(s.starts_at at time zone 'Asia/Manila')::date)
     on conflict(service_id,service_date) do nothing;
   select * into q from public.queue_sessions where service_id=s.service_id and service_date=(s.starts_at at time zone 'Asia/Manila')::date for update;
@@ -196,8 +192,6 @@ begin
   perform private.notify(a.patient_id,'queue:'||p_key,'queue_'||p_action,'appointment',a.id,false);
   return private.receipt(p_key,v_payload,to_jsonb(t));
 end $$;
-
--- Own ticket plus aggregate only. No full queue or other patient identifiers.
 create function public.my_queue(p_appointment uuid) returns jsonb language plpgsql stable security definer set search_path = '' as $$
 declare t public.queue_tickets; v_ahead bigint; v_service text;
 begin

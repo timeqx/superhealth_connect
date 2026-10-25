@@ -36,8 +36,6 @@ export async function submitVerification(
   if (!p.first_name || !p.last_name || !p.barangay_code || !p.phone)
     throw new Error("PROFILE_INCOMPLETE");
   await repository.store(path, input.bytes, detected.mime);
-  // On an uncertain RPC failure, retain the private object. A retry reconciles
-  // metadata before uploading again; never delete a possibly committed document.
   await repository.submit({
     id: input.id,
     path,

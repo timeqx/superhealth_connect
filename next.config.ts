@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   distDir: process.env.E2E_TEST === "1" ? ".next-e2e" : ".next",
   poweredByHeader: false,
+  agentRules: false,
   devIndicators: false,
   logging: { serverFunctions: false },
   experimental: { serverActions: { bodySizeLimit: "6mb" } },

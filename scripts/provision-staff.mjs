@@ -62,8 +62,6 @@ try {
   }
 } catch (error) {
   await client.query("rollback").catch(() => {});
-  // Fixed messages only: raw PostgreSQL/network errors can contain credentials,
-  // connection details or account data.
   const guidance = {
     ENOTFOUND: "Database hostname could not be resolved. If using Supabase's IPv6 direct endpoint, copy Connect > Session pooler into STAFF_DATABASE_URL for IPv4 access. Copy its full host AND username.",
     EAI_AGAIN: "Database DNS lookup temporarily failed. Check DNS/network availability before retrying.",

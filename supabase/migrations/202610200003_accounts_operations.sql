@@ -14,7 +14,6 @@ begin
   update public.profiles set first_name=trim(p_first),middle_name=trim(coalesce(p_middle,'')),last_name=trim(p_last),
     barangay_code=p_barangay,other_barangay=case when p_barangay='Others' then trim(p_other) else null end,phone=p_phone where id=auth.uid();
 end $$;
--- Server validates content bytes and ownership BEFORE using this restricted entrypoint.
 create function public.submit_verification(p_user uuid,p_document uuid,p_path text,p_mime text,p_size integer)
 returns void language plpgsql security definer set search_path = '' as $$
 declare p public.profiles;

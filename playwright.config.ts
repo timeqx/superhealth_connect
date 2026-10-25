@@ -2,7 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  // Bound cold route compilation while another local dev session is running.
   workers: 2,
   timeout: 60000,
   expect: { timeout: 15000 },

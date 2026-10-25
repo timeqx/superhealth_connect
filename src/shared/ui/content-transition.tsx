@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 
 const authPaths = new Set(["/sign-in", "/register", "/forgot-password", "/reset-password"]);
 
-/** Animate the existing content node; never key/remount shared layouts or forms. */
 export function ContentTransition({ children, className = "route-content", changeKey = "", excludeAuth = false }: {
   children: ReactNode; className?: string; changeKey?: string; excludeAuth?: boolean;
 }) {

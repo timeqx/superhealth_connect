@@ -21,7 +21,6 @@ export async function sendRegistrationLink(input: unknown): Promise<ActionResult
     });
     if (error) {
       const code = error.code && /^[a-z_]{1,80}$/.test(error.code) ? error.code : "unknown";
-      // Never log the submitted profile, recipient, token, or provider message.
       console.warn("[registration-email]", { code, status: error.status });
       const messages: Record<string, string> = {
         email_address_not_authorized: "Verification email is not available for this address because the email service is restricted. Please contact the center to complete registration.",
@@ -60,7 +59,6 @@ export async function saveRegistrationDetails(input: unknown): Promise<ActionRes
     if (actor.role !== "patient" || !needsRegistration(actor.user.user_metadata))
       return { ok: true, message: "This account is already registered.", redirectTo: actor.role === "admin" ? "/admin" : "/patient" };
     if (actor.user.email?.toLowerCase() !== value.email) throw new Error("FORBIDDEN");
-    // Do not overwrite a submitted or reviewed identity when resuming signup.
     if (actor.profile.review_status !== "incomplete" || actor.profile.current_document_id)
       return { ok: true, message: "Continue your registration.", redirectTo: "/register" };
     const p = value.profile;
@@ -81,7 +79,6 @@ export async function completeRegistration(input: unknown): Promise<ActionResult
     if (actor.role !== "patient") throw new Error("FORBIDDEN");
     if (registrationStep(actor.profile) !== 4)
       return { ok: false, message: "Complete your details and upload your QC ID before setting your password." };
-    // Check the actual private document, not a browser-supplied completion flag.
     const { data: document, error: documentError } = await actor.client.from("verification_documents")
       .select("id").eq("id", actor.profile.current_document_id!).eq("user_id", actor.user.id).maybeSingle();
     if (documentError || !document) throw new Error("FORBIDDEN");
@@ -90,7 +87,6 @@ export async function completeRegistration(input: unknown): Promise<ActionResult
     });
     if (error && error.code !== "same_password") return { ok: false, message: "Your password could not be saved. Try a different password, or verify your email again if your session has expired." };
     if (error?.code === "same_password") {
-      // An earlier attempt may have committed before its response was lost.
       const { error: metadataError } = await actor.client.auth.updateUser({ data: { patient_registration_complete: true } });
       if (metadataError) throw metadataError;
     }

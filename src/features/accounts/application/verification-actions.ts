@@ -21,8 +21,6 @@ export async function uploadVerification(
         message: "Choose a JPEG, PNG or PDF no larger than 5 MB.",
       };
     const bytes = new Uint8Array(await file.arrayBuffer());
-    // Stable across network retries; scoped to actor and actual bytes. Changed
-    // files can never overwrite an earlier submission under the same browser key.
     const digest = createHash("sha256")
       .update(actor.user.id)
       .update(key)
@@ -58,7 +56,6 @@ export async function uploadVerification(
               cacheControl: "0",
             });
           if (error) {
-            // Storage may have committed before the client lost the response.
             const { data: existing, error: readError } = await client.storage
               .from("verification")
               .download(path);
@@ -81,7 +78,6 @@ export async function uploadVerification(
             p_size: document.size,
           });
           if (error) {
-            // Reconcile concurrent retries or an uncertain committed response.
             const { data: committed, error: readError } = await actor.client
               .from("verification_documents")
               .select("id")

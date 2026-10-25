@@ -40,7 +40,7 @@ export function RegistrationForm({ initialStep = 0, profile, verifiedEmail = "",
           router.replace(result.redirectTo);
           router.refresh();
         }
-      } catch { /* Keep the form available while offline; retry on focus. */ }
+      } catch {}
       finally { checking = false; }
     }
     const interval = window.setInterval(() => { if (!stopped) void check(); }, 5000);

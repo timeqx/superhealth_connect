@@ -1,6 +1,4 @@
 export async function processOutbox({ client, origin, apiKey, sender, deliver = fetch, log = () => {} }) {
-    // Never retry beyond the provider's 24-hour deduplication window. An operator
-    // must reconcile these ambiguous messages with the provider before replaying.
     await client.query(`update public.email_outbox set state='failed',last_error='RECONCILE_REQUIRED'
       where state in ('pending','claimed') and claimed_at < now()-interval '23 hours'`);
     for (let index = 0; index < 20; index++) {
@@ -27,7 +25,7 @@ export async function processOutbox({ client, origin, apiKey, sender, deliver = 
         const result = await response.json();
         if (typeof result.id !== "string") throw new Error("INVALID_RECEIPT");
         providerId = result.id;
-      } catch { /* Store only fixed error codes; never provider bodies or addresses. */ }
+      } catch {}
       if (providerId) {
         await client.query("update public.email_outbox set state='sent',sent_at=now(),provider_message_id=$2,last_error=null where id=$1 and attempt_count=$3 and state='claimed'", [job.id, providerId, job.attempt_count]);
       } else {

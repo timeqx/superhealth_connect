@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   Baby,
   CalendarDays,
   Check,
@@ -135,10 +134,8 @@ export function QuickActions() {
       </span>
       <h2>Make time for your health.</h2>
       <p>Choose a service and request an available session.</p>
-      <ButtonLink href="/patient/book">
-        Book an appointment <ArrowUpRight size={16} />
-      </ButtonLink>
-      <ButtonLink href="/patient/inquiries" secondary>
+
+      <ButtonLink href="/patient/inquiries">
         Ask a question
       </ButtonLink>
     </Card>

@@ -14,9 +14,7 @@ export async function serverClient() {
           values.forEach(({ name, value, options }) =>
             jar.set(name, value, options),
           );
-        } catch {
-          /* Server Components cannot set cookies; proxy refreshes them. */
-        }
+        } catch {}
       },
     },
   });

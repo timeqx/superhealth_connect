@@ -1288,7 +1288,6 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
-/* Keep every staff action visible without requiring horizontal scrolling. */
 @media (max-width: 600px) {
   .table-wrap {
     overflow: visible;
@@ -1360,13 +1359,11 @@ tr:last-child td {
   }
 }
 
-/* Quiet loading placeholders; real content replaces them without a minimum delay. */
 .skeleton { border-radius: 8px; background: var(--border); }
 .page-skeleton { animation: skeleton-breathe 1.8s ease-in-out infinite; }
 .page-skeleton .card { box-shadow: none; }
 @keyframes skeleton-breathe { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .page-skeleton { animation: none; } }
-/* Compact patient workspaces: summaries first, details on demand. */
 .profile-layout,
 .inquiries-layout {
   display: grid;
@@ -1422,7 +1419,6 @@ tr:last-child td {
   .visits-filter, .visits-filter label { flex: 1; min-width: 0; }
   .sheet-content.detail-dialog { padding: 64px 20px 24px; }
 }
-/* Staff workspaces share responsive forms and compact operational records. */
 input[type="checkbox"] {
   width: 18px;
   height: 18px;

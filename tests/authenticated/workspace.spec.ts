@@ -45,7 +45,6 @@ test("patient authorization, inquiry response, notification and staff workspace"
     await expect(thread.getByText("Private draft", { exact: false })).toBeVisible();
     await patient.reload();
     await expect(patient.getByText("Synthetic private draft", { exact: false })).toHaveCount(0);
-    // Edit and publish the saved draft itself rather than creating another reply.
     const savedDraft = thread.locator(".conversation-message").filter({ hasText: "Private draft" });
     await savedDraft.getByLabel("Staff response").fill(`Synthetic reply to ${subject}`);
     await savedDraft.getByRole("button", { name: "Send reply", exact: true }).click();

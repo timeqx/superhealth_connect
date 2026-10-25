@@ -11,7 +11,6 @@ export const getActor = cache(async () => {
     error,
   } = await client.auth.getUser();
   if (error || !user) return null;
-  // Independent reads share the verified actor and remain protected by RLS.
   const [roleResult, profileResult] = await Promise.all([
     client.from("user_roles").select("role,disabled_at").eq("user_id", user.id).single(),
     client.from("profiles").select("*").eq("id", user.id).single(),

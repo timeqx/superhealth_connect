@@ -22,9 +22,6 @@ export function registrationStep(profile: Profile): 0 | 3 | 4 {
   if (!profileSchema.safeParse(profileValues(profile)).success) return 0;
   return profile.current_document_id && ["pending", "approved"].includes(profile.review_status) ? 4 : 3;
 }
-
-// These user-editable metadata flags affect navigation only, never authorization.
-// Roles, document ownership and review status are checked independently on the server.
 export function needsRegistration(metadata: Record<string, unknown>) {
   return metadata.patient_registration_started === true && metadata.patient_registration_complete !== true;
 }
