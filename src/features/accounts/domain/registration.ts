@@ -10,6 +10,11 @@ export const signupPasswordSchema = z.object({
   password: registrationSchema.shape.password,
   confirm: z.string(),
 }).refine(value => value.password === value.confirm, { message: "Passwords must match.", path: ["confirm"] });
+export const signupAccountSchema = signupContactSchema.extend({
+  password: registrationSchema.shape.password,
+  confirm: z.string(),
+  qcIdDraftId: z.uuid().optional(),
+}).refine(value => value.password === value.confirm, { message: "Passwords must match.", path: ["confirm"] });
 
 export function profileValues(profile?: Profile) {
   return {

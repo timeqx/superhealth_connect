@@ -1443,7 +1443,7 @@ input[type="checkbox"] {
 .registration-flow > h2 { font-size: 20px; }
 .registration-fields { display: grid; gap: 10px; min-width: 0; padding: 0; margin: 0; border: 0; }
 .registration-fields > p { font-size: 14px; }
-.registration-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 0; margin: 0; list-style: none; }
+.registration-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 0; margin: 0; list-style: none; }
 .registration-steps li { display: grid; justify-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground); text-align: center; }
 .registration-steps li > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--muted); }
 .registration-steps li[aria-current="step"] { font-weight: 700; color: var(--primary); }

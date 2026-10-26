@@ -55,7 +55,11 @@ release process. Service seeds are unpublished; staff must configure services an
 Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
 URLs and configure Auth SMTP for signup and password recovery. Verification links must
 open in the same browser profile that started registration. Email verification and staff
-account approval are separate steps.
+account approval are separate steps. Patients enter their name and barangay, then their
+mobile number and an optional QC ID file, before creating their email and password. A
+selected file is submitted after email confirmation; a skipped file can be uploaded later
+from the profile. Patients can sign in after email confirmation, while appointment requests
+remain blocked until staff approves the QC ID.
 
 To provision an existing email-confirmed staff account, configure `STAFF_DATABASE_URL`:
 

@@ -8,7 +8,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
       <PageTitle eyebrow="WELCOME BACK" title="Care starts here.">
         Sign in to manage your visits. Staff use the same secure sign-in.
       </PageTitle>
-      {registered === "1" && <p className="notice" role="status">Registration complete. Sign in with your verified email and password. Your account remains subject to staff review.</p>}
+      {registered === "1" && <p className="notice" role="status">Registration complete. Sign in with your verified email and password. You can request appointments after staff approves your QC ID.</p>}
 
       <AuthForm mode="sign-in" />
       <Link className="sign-in-recovery" href="/forgot-password">Forgot password?</Link>

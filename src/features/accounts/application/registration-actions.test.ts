@@ -10,22 +10,28 @@ import { completeRegistration, saveRegistrationDetails, sendRegistrationLink, re
 const profile: Profile = { id: "synthetic-patient", first_name: "Sample", middle_name: "", last_name: "Patient", barangay_code: "Others", other_barangay: "Sample barangay", phone: "+639171234567", review_status: "pending", rejection_reason: null, current_document_id: "synthetic-document" };
 const contact = { profile: profileValues(profile), email: "synthetic@example.test", consent: true };
 const password = { password: "synthetic-password-123", confirm: "synthetic-password-123" };
+const account = { ...contact, ...password };
 function setup(overrides: Partial<Profile> = {}) {
   const query = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { id: profile.current_document_id }, error: null }) };
-  const client = { auth: { signInWithOtp: vi.fn().mockResolvedValue({ error: null }), verifyOtp: vi.fn().mockResolvedValue({ error: null }), updateUser: vi.fn().mockResolvedValue({ error: null }), signOut: vi.fn().mockResolvedValue({ error: null }) }, rpc: vi.fn().mockResolvedValue({ error: null }), from: vi.fn(() => query) };
-  const actor = { client, role: "patient", user: { id: profile.id, email: contact.email, email_confirmed_at: "2026-10-22T00:00:00Z", user_metadata: { patient_registration_started: true } }, profile: { ...profile, ...overrides } };
+  const client = { auth: { signUp: vi.fn().mockResolvedValue({ error: null }), resend: vi.fn().mockResolvedValue({ error: null }), updateUser: vi.fn().mockResolvedValue({ error: null }), signOut: vi.fn().mockResolvedValue({ error: null }) }, rpc: vi.fn().mockResolvedValue({ error: null }), from: vi.fn(() => query) };
+  const actor = { client, role: "patient", user: { id: profile.id, email: contact.email, email_confirmed_at: "2026-10-22T00:00:00Z", user_metadata: { patient_registration_started: true, patient_registration_password_set: true } }, profile: { ...profile, ...overrides } };
   mocks.client.mockResolvedValue(client); mocks.actor.mockResolvedValue(actor);
   return { client, actor, query };
 }
 beforeEach(() => { vi.clearAllMocks(); vi.stubEnv("APP_URL", "http://localhost:3000"); });
 describe("patient registration gates", () => {
-  it("requires Others text and consent before sending a real OTP", async () => {
+  it("requires Others text and consent before sending a signup confirmation", async () => {
     const { client } = setup();
-    expect((await sendRegistrationLink({ ...contact, profile: { ...contact.profile, other: "" } })).ok).toBe(false);
-    expect((await sendRegistrationLink({ ...contact, consent: false })).ok).toBe(false);
-    expect(client.auth.signInWithOtp).not.toHaveBeenCalled();
-    expect((await sendRegistrationLink(contact)).ok).toBe(true);
-    expect(client.auth.signInWithOtp).toHaveBeenCalledWith({ email: contact.email, options: { shouldCreateUser: true, emailRedirectTo: "http://localhost:3000/auth/callback", data: { patient_registration_started: true, registration_draft: contact.profile } } });
+    expect((await sendRegistrationLink({ ...account, profile: { ...account.profile, other: "" } })).ok).toBe(false);
+    expect((await sendRegistrationLink({ ...account, consent: false })).ok).toBe(false);
+    expect(client.auth.signUp).not.toHaveBeenCalled();
+    expect((await sendRegistrationLink(account)).ok).toBe(true);
+    expect(client.auth.signUp).toHaveBeenCalledWith({ email: contact.email, password: password.password, options: { emailRedirectTo: "http://localhost:3000/auth/callback", data: { patient_registration_started: true, patient_registration_password_set: true, registration_draft: contact.profile } } });
+  });
+  it("rejects mismatched passwords before creating the account", async () => {
+    const { client } = setup();
+    expect((await sendRegistrationLink({ ...account, confirm: "different-password" })).ok).toBe(false);
+    expect(client.auth.signUp).not.toHaveBeenCalled();
   });
   it("refuses profile writes without verified ownership of the email", async () => {
     const { client, actor } = setup({ review_status: "incomplete", current_document_id: null });
@@ -50,40 +56,35 @@ describe("patient registration gates", () => {
     expect(registrationStep({ ...profile, review_status: "rejected" })).toBe(3);
     expect(registrationStep(profile)).toBe(4);
   });
-  it("rejects password completion before QC ID submission", async () => {
-    const { client } = setup({ current_document_id: null, review_status: "incomplete" });
-    expect((await completeRegistration(password)).ok).toBe(false);
+  it("blocks registration completion until profile details are saved", async () => {
+    const { client } = setup({ first_name: "", current_document_id: null, review_status: "incomplete" });
+    expect((await completeRegistration()).ok).toBe(false);
     expect(client.auth.updateUser).not.toHaveBeenCalled();
   });
-  it("requires an active patient and an owned document even if metadata claims completion", async () => {
+  it("requires an active patient and an owned document", async () => {
     const { client, actor, query } = setup();
     Object.assign(actor.user.user_metadata, { patient_registration_complete: true });
     actor.role = "admin";
-    expect((await completeRegistration(password)).ok).toBe(false);
+    expect((await completeRegistration()).ok).toBe(false);
     actor.role = "patient";
     query.maybeSingle.mockResolvedValue({ data: null, error: null });
-    expect((await completeRegistration(password)).ok).toBe(false);
+    expect((await completeRegistration()).ok).toBe(false);
     mocks.actor.mockResolvedValue(null);
-    expect((await completeRegistration(password)).ok).toBe(false);
+    expect((await completeRegistration()).ok).toBe(false);
     expect(client.auth.updateUser).not.toHaveBeenCalled();
   });
-  it("rejects mismatched passwords", async () => {
-    const { client } = setup();
-    expect((await completeRegistration({ ...password, confirm: "different-password" })).ok).toBe(false);
-    expect(client.auth.updateUser).not.toHaveBeenCalled();
-  });
-  it("sets the password then signs out and returns to login", async () => {
+  it("marks registration complete then signs out and returns to login", async () => {
     const { client, query } = setup();
-    expect((await completeRegistration(password)).redirectTo).toBe("/sign-in?registered=1");
+    expect((await completeRegistration()).redirectTo).toBe("/sign-in?registered=1");
     expect(query.eq).toHaveBeenCalledWith("user_id", profile.id);
-    expect(client.auth.updateUser).toHaveBeenCalledWith({ password: password.password, data: { patient_registration_complete: true } });
+    expect(client.auth.updateUser).toHaveBeenCalledWith({ data: { patient_registration_complete: true } });
     expect(client.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
   });
-  it("reconciles a password already saved after an uncertain response", async () => {
-    const { client } = setup();
-    client.auth.updateUser.mockResolvedValueOnce({ error: { code: "same_password" } });
-    expect((await completeRegistration(password)).ok).toBe(true);
-    expect(client.auth.updateUser).toHaveBeenLastCalledWith({ data: { patient_registration_complete: true } });
+  it("lets an existing email-only account set its password at completion", async () => {
+    const { client, actor } = setup();
+    actor.user.user_metadata.patient_registration_password_set = false;
+    expect((await completeRegistration(password)).redirectTo).toBe("/sign-in?registered=1");
+    expect(client.auth.updateUser).toHaveBeenCalledWith({ password: password.password, data: { patient_registration_password_set: true, patient_registration_complete: true } });
   });
 });
 
@@ -98,13 +99,13 @@ describe("registration email failures", () => {
     const { client } = setup();
     const log = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      client.auth.signInWithOtp.mockResolvedValue({ error: { code, status: 422, message: "private provider detail" } });
-      const result = await sendRegistrationLink(contact);
+      client.auth.signUp.mockResolvedValue({ error: { code, status: 422, message: "private provider detail" } });
+      const result = await sendRegistrationLink(account);
       expect(result.ok).toBe(false);
       expect(result.message).toContain(message);
       expect(result.message).not.toContain("private provider detail");
       expect(log).toHaveBeenCalledWith("[registration-email]", { code, status: 422 });
-      expect(client.auth.signInWithOtp).toHaveBeenCalledTimes(1);
+      expect(client.auth.signUp).toHaveBeenCalledTimes(1);
     } finally { log.mockRestore(); }
   });
 });
