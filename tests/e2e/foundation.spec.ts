@@ -1,0 +1,80 @@
+import { test, expect } from "@playwright/test";
+test("public navigation and no-configuration guard", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: /Your next step/ }),
+  ).toBeVisible();
+  await page
+    .getByRole("link", { name: "Explore services", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Care for every stage of life", exact: true }),
+  ).toBeVisible();
+  await page.goto("/admin");
+  await expect(
+    page.getByRole("heading", {
+      name: "Online accounts are temporarily unavailable",
+    }),
+  ).toBeVisible();
+});
+test("account review routes cannot become demo access", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/admin/reviews");
+  await expect(
+    page.getByRole("heading", {
+      name: "Online accounts are temporarily unavailable",
+    }),
+  ).toBeVisible();
+  const response = await request.get(
+    "/admin/reviews/document/70000000-0000-4000-8000-000000000001",
+  );
+  expect(response.status()).toBe(503);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(response.headers().location).toBeUndefined();
+});
+test("responsive screens do not overflow", async ({ page }) => {
+  for (const path of [
+    "/",
+    "/services",
+    "/sign-in",
+    "/register",
+  ]) {
+    await page.goto(path);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: test
+        .info()
+        .outputPath(
+          path === "/" ? "landing.png" : `${path.replaceAll("/", "-")}.png`,
+        ),
+      fullPage: true,
+    });
+  }
+});
+test("sign in reports missing configuration without inventing a session", async ({
+  page,
+}) => {
+  await page.goto("/sign-in");
+  await page.getByLabel("Email address").fill("synthetic@example.invalid");
+  await page.getByLabel("Password", { exact: true }).fill("synthetic-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  const snackbar = page.locator(".snackbar");
+  await expect(snackbar).toContainText("temporarily unavailable");
+  const bounds = await snackbar.boundingBox();
+  expect(bounds!.x).toBeLessThan(50);
+  expect(bounds!.y).toBeGreaterThan(page.viewportSize()!.height / 2);
+  await expect(snackbar).not.toBeVisible({ timeout: 10000 });
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(snackbar).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await expect(snackbar).not.toBeVisible();
+});

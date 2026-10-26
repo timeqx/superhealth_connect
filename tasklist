@@ -1,0 +1,305 @@
+# SuperHealth Connect Development Tasks
+
+Reviewed: 25 October 2026.
+
+Checked items are implemented in the current codebase unless a note narrows the scope.
+They do not certify hosted configuration, live delivery, stakeholder approval or production readiness.
+Unchecked items are incomplete, optional, or not verified; notes identify partial implementations.
+
+Verification available from the preceding cleanup: lint, TypeScript and production build passed;
+38 application tests, 19 embedded database tests and 3 email tests passed. No tests were rerun
+for this checklist-only review. Browser, live Supabase and multi-connection concurrency checks
+are not covered by those results.
+
+## 1. Project Planning and Requirements
+- [ ] Review and finalize the patient and admin flowcharts. Note: Stakeholder sign-off is not recorded in this branch.
+- [x] Define the features and limitations of the first release (MVP).
+- [x] Define patient and administrator permissions.
+- [ ] Confirm the complete list of available health services. Note: Seven draft categories are seeded; the center-confirmed service list is not recorded.
+- [ ] Confirm the supported barangays and the Others option. Note: Five named options and Others are implemented; eligibility confirmation remains outstanding.
+- [ ] Define appointment duration, available hours, capacity, and scheduling rules. Note: Configurable sessions, capacity and transactional booking rules exist; approved operating hours and policy remain outstanding.
+- [x] Define appointment statuses: Pending, Scheduled, Rejected, Cancelled, Completed.
+- [ ] Define inquiry statuses: Pending, Follow-up, Resolved. Note: Implemented states are Open, In progress, Waiting for follow-up and Resolved; they differ from this item.
+- [x] Define patient registration and account approval rules.
+- [ ] Confirm QC ID verification requirements and document retention. Note: Private document verification exists; approved ID alternatives and retention periods are not documented.
+- [x] Define how appointment and inquiry notifications will work.
+- [ ] Finalize sitemap, database relationships, and application workflows. Note: Routes, relationships and workflows exist; final approval is not recorded.
+
+## 2. Development Environment and Project Setup
+- [x] Install and configure Node.js, Git, and a code editor.
+- [x] Initialize the Next.js project with React and TypeScript.
+- [x] Configure the Next.js App Router.
+- [x] Install and configure Tailwind CSS.
+- [x] Install and configure shadcn/ui components.
+- [x] Install Lucide icons and essential dependencies.
+- [ ] Configure ESLint, Prettier, and TypeScript checks. Note: ESLint and TypeScript are configured; Prettier is not installed or configured.
+- [x] Define reusable folders for pages, components, features, services, and utilities.
+- [x] Create shared application layouts, navigation, and route groups.
+- [x] Set up environment variables and an .env.example file.
+- [x] Initialize or configure the GitHub repository and branching workflow.
+- [x] Implement base loading, empty, error, and not-found states.
+
+## 3. Supabase Setup and Integration
+- [ ] Create a Supabase project and PostgreSQL database. Note: Hosted project creation and current schema deployment were not verified.
+- [x] Install the Supabase JavaScript SDK and server-side authentication support.
+- [x] Configure browser and server Supabase clients.
+- [ ] Configure Supabase URL and publishable key environment variables. Note: Required URL and publishable-key values were not found in the local environment files during this review.
+- [x] Implement secure cookie-based authentication sessions.
+- [x] Configure authentication callback and redirect URLs. Note: Callback route and local redirect configuration implemented; hosted allowlist not verified.
+- [x] Enable email/password authentication and email verification. Note: Enabled in local configuration; hosted Auth settings and email delivery not verified.
+- [x] Configure registration, login, and password recovery.
+- [x] Set up a private Supabase Storage bucket for QC ID images. Note: Private bucket and policies are defined in migrations; hosted installation not verified.
+- [x] Configure database access permissions and Row Level Security (RLS).
+- [ ] Set up Supabase CLI and version-controlled database migrations. Note: CLI configuration and versioned migrations exist; installed CLI and a running local Supabase instance were not verified.
+- [x] Create sample data and a reproducible database seed script. Note: Draft services and isolated test fixtures only; no patient records are seeded.
+- [ ] Configure production email delivery (Possible cost). Note: Notification worker exists; SMTP, sender, scheduling and production delivery remain unverified.
+
+## 4. Database Development
+- [x] Create patient profile records linked to Supabase Auth users.
+- [x] Create administrator or staff role records and employee ID references.
+- [ ] Create the supported barangays table. Note: Barangays use a profile CHECK constraint and application constants, not a separate table.
+- [x] Create health service categories and service details.
+- [x] Create patient identity document records.
+- [x] Create account approval and verification status fields.
+- [x] Create service schedules, available slots, and capacity records.
+- [x] Create appointments and their associated patient/service references.
+- [x] Create appointment status history records.
+- [x] Create inquiries and administrator response records.
+- [ ] Create inquiry follow-up/status history records. Note: Current status and message history exist; no dedicated inquiry status-transition history table.
+- [x] Create notification and notification delivery records as needed.
+- [x] Create administrative audit logs for important actions.
+- [x] Add foreign keys, unique constraints, indexes, and timestamps.
+- [ ] Add the initial five named barangays and confirmed service categories. Note: Five barangays are supported and seven draft services are seeded; service confirmation is outstanding.
+- [x] Create database migrations and test data integrity.
+
+## 5. UI/UX Design and Shared Components
+- [x] Create mobile and desktop page designs.
+- [x] Define typography, colors, spacing, and visual styles.
+- [x] Build reusable buttons, input fields, cards, badges, tables, and dialogs.
+- [x] Build shared form validation and error message components.
+- [x] Build public landing page, header, footer, and navigation.
+- [x] Build authentication page layouts.
+- [x] Build responsive patient dashboard layout.
+- [x] Build responsive administrator dashboard layout.
+- [x] Build service selection cards and appointment calendar components. Note: Uses a native date input with session selection.
+- [x] Build shared confirmation dialogs and status indicators.
+- [x] Build accessibility support, keyboard navigation, and readable form labels. Note: Labels, keyboard-accessible controls and dialogs exist; a full accessibility audit is still needed.
+- [ ] Test navigation and layout on mobile, tablet, and desktop. Note: Responsive browser tests exist, but no current browser test run was verified in this review.
+
+## 6. Patient Registration and Authentication
+- [x] Create the Patient/Admin entry interface. Note: Shared sign-in routes users by their server-controlled role.
+- [x] Create patient signup and login pages.
+- [x] Implement registration for first, middle, and last names.
+- [x] Implement barangay selection: Bagong Silangan, Batasan Hills, Commonwealth, Holy Spirit, and Payatas.
+- [x] Implement the Others barangay option with manual text entry.
+- [x] Implement phone number and email address fields.
+- [x] Implement contact information validation.
+- [x] Implement email verification or OTP verification. Note: Email-link verification is implemented.
+- [ ] Implement phone OTP verification if selected (Possible cost). Note: Not selected for the current implementation; phone is a contact field.
+- [x] Implement QC ID image capture or upload. Note: File upload implemented; no dedicated camera capture interface.
+- [x] Validate uploaded image format and size.
+- [x] Store QC ID images securely in private Supabase Storage. Note: Server upload and private Storage policies implemented; live upload acceptance remains unverified.
+- [x] Implement username/email and password registration.
+- [x] Create the patient profile after registration.
+- [x] Handle pending account approval where required.
+- [x] Implement login, logout, and session persistence.
+- [ ] Implement incorrect credential and login rate-limit handling. Note: Generic credential errors are handled; dedicated rate-limit handling and configured provider limits are not verified.
+- [x] Implement forgot password and password reset.
+- [x] Protect authenticated routes and restrict unapproved accounts.
+
+## 7. Patient Dashboard and Profile
+- [x] Create the patient dashboard home page.
+- [x] Display patient name and account verification status.
+- [x] Create navigation for Appointments, Inquiries, and Profile.
+- [x] Display upcoming and previous appointments.
+- [x] Display appointment status and relevant notifications.
+- [x] Display submitted inquiries and responses.
+- [x] Create patient profile detail and editing forms.
+- [x] Restrict sensitive information editing where verification is required.
+- [x] Provide appointment and inquiry history views.
+- [x] Add loading, empty, success, and failure states.
+
+## 8. Patient Appointment Booking
+- [x] Create the appointment dashboard.
+- [x] Display available healthcare service categories. Note: Services appear only after staff publish them and enable booking.
+- [x] Implement Maternal & Child Care selection.
+- [x] Implement Family Planning selection.
+- [x] Implement Animal Bite Treatment selection.
+- [x] Implement Mental Health Support selection.
+- [x] Implement Immunizations selection.
+- [x] Implement TB DOTS selection.
+- [ ] Confirm whether Screening Services should be included (marked out in part of the flowchart). Note: Screening Services is present in the draft seed; inclusion still needs confirmation.
+- [x] Load service-specific appointment availability from Supabase.
+- [x] Build calendar with available dates and times. Note: Native date picker and available-session list.
+- [x] Display available, unavailable, and fully booked slots.
+- [x] Implement appointment date/time selection.
+- [x] Create appointment request form and submission logic.
+- [x] Validate appointment eligibility and required information.
+- [ ] Prevent invalid dates, duplicate requests, and conflicting slot bookings. Note: Invalid dates, repeat submissions, duplicate same-slot bookings and capacity conflicts are guarded; overlapping appointments across distinct slots are not explicitly prevented.
+- [x] Create appointment records with Pending status.
+- [x] Display appointment request submission confirmation.
+- [x] Display admin approval, rejection, cancellation, and scheduling updates.
+- [x] Allow patients to view their request history and details.
+
+## 9. Patient Inquiry System
+- [x] Create the patient inquiry page.
+- [x] Build an inquiry form with subject, message, and required details.
+- [x] Validate and submit inquiries to Supabase.
+- [x] Show a successful inquiry submission confirmation.
+- [ ] Set the default inquiry status to Pending. Note: New inquiries default to Open, not Pending.
+- [x] Allow patients to view their inquiry history.
+- [x] Display administrator responses and follow-up status.
+- [ ] Implement patient email notification for inquiries (Possible cost). Note: Outbox generation and email worker exist; actual inquiry email delivery is not verified.
+- [x] Display Resolved status after administrator completion.
+
+## 10. Administrator Authentication and Dashboard
+- [x] Create secure administrator login.
+- [x] Link administrator identity to employee ID and profile information.
+- [ ] Provision administrator accounts and verify approved roles. Note: Provisioning script and role checks exist; actual staff provisioning was not verified.
+- [x] Protect administrator routes with server-side authorization.
+- [x] Create the administrator dashboard.
+- [x] Display pending patient account applications. Note: Available in the Account reviews workspace.
+- [x] Display incoming appointment requests.
+- [x] Display new patient inquiries. Note: Available in the Inquiry inbox workspace.
+- [x] Display service availability overview. Note: Available in Services & schedules.
+- [x] Implement dashboard counts and status summaries. Note: Request counts, overdue counts and reports exist; not a single consolidated dashboard.
+- [x] Create navigation for Accounts, Appointments, Inquiries, Services, and History.
+- [x] Implement administrator logout and error handling.
+
+## 11. Patient Account Verification and Management
+- [x] Create administrator patient account listing. Note: Pending application list, not a complete patient directory.
+- [ ] Display pending, approved, and rejected account applications. Note: Review listing currently queries pending accounts only.
+- [x] Create patient account detail page. Note: Details are shown in a review panel rather than a standalone detail route.
+- [x] Allow authorized administrators to view submitted QC ID images.
+- [x] Implement patient information verification.
+- [x] Implement account approval with status update.
+- [x] Implement account rejection with a required reason.
+- [x] Notify patients about account approval or rejection. Note: In-app notice and email outbox implemented; email delivery not verified.
+- [ ] Enable searching and filtering of patient records. Note: Staff booking can search approved patients by last name; review-directory search and status filters are missing.
+- [x] Record account review activity in audit history.
+
+## 12. Admin Appointment Management
+- [x] Create incoming appointment request listing.
+- [x] Create appointment detail review page. Note: Details are shown in a review panel.
+- [x] Display patient, service, date, and requested timeslot information.
+- [x] Implement appointment approval.
+- [x] Update approved appointments to Scheduled.
+- [x] Implement appointment rejection with a reason.
+- [x] Implement alternative schedule suggestions for rejected requests.
+- [x] Implement appointment cancellation and status updates.
+- [x] Prevent overbooking when administrators approve requests.
+- [x] Notify patients of appointment decisions and changes. Note: In-app notices and email outbox implemented; email delivery not verified.
+- [ ] Add search, sorting, and status filters. Note: Exact-reference and status filters exist in history; ordering is fixed, with no user-selectable sorting.
+- [x] Create appointment history and schedule views.
+
+## 13. Admin Inquiry Management
+- [x] Create incoming inquiry listing.
+- [x] Build inquiry detail and response interface.
+- [x] Implement administrator replies to patients.
+- [x] Implement saving response drafts or flagging inquiries for follow-up.
+- [x] Implement sending inquiry response notifications. Note: In-app notifications and email outbox are implemented; delivery requires worker configuration.
+- [x] Implement marking inquiries as Resolved.
+- [x] Display inquiry history and response records.
+- [ ] Add inquiry search and status filtering. Note: Inbox is paginated but has no search or status filter.
+
+## 14. Service Availability and Calendar Management
+- [x] Create admin service management screen.
+- [x] Display service schedules and capacity.
+- [ ] Implement creation and editing of available dates and times. Note: Session creation exists; existing times and service cannot be edited. Close the session and create a replacement.
+- [x] Implement marking timeslots unavailable.
+- [x] Implement slot capacity management.
+- [ ] Implement blocked dates, holidays, or temporary service closures. Note: Sessions can close and services can stop accepting bookings; no dedicated holiday or blocked-date calendar.
+- [x] Update patient booking availability after admin changes.
+- [x] Handle existing bookings when availability changes.
+- [x] Validate calendar updates against appointments.
+- [x] Synchronize service availability and booking information with Supabase.
+
+## 15. User History, Notifications, and Reports
+- [x] Create appointment history views for administrators.
+- [x] Create inquiry history views for administrators.
+- [x] Implement patient and admin activity history. Note: Appointment/message histories and staff audit records exist; not a general user activity tracker.
+- [x] Create notification generation for account decisions.
+- [x] Create notification generation for appointment decisions and changes.
+- [x] Create notification generation for inquiry responses.
+- [x] Implement notification delivery tracking and failure handling. Note: Worker leases, retries, delivery states and fixed failure codes implemented; live delivery unverified.
+- [x] Build administrator history summary reports.
+- [ ] Add report filtering by date, service, and status. Note: Reports filter by date and display status totals; service/status selection filters are missing.
+- [x] Implement downloadable CSV reports (Optional).
+- [ ] Implement automatic reminder messages before appointments (Optional, Possible cost).
+- [x] Implement live dashboard updates using Supabase Realtime (Optional). Note: Subscriptions and polling fallbacks implemented; live cross-browser verification remains outstanding.
+
+## 16. Security, Privacy, and Reliability
+- [x] Implement database RLS for patient-owned records.
+- [x] Implement role-based permissions for administrator actions.
+- [x] Secure Next.js server actions and API endpoints.
+- [x] Ensure no Supabase secret/service-role keys are exposed in browser code.
+- [x] Protect identity images with private Storage policies and authorized access.
+- [ ] Validate and sanitize all user-supplied input. Note: Server schemas, SQL guards and file signature checks exist; complete input/security review remains outstanding.
+- [ ] Protect authentication and submission workflows from abuse. Note: Authorization and retry guards exist; comprehensive abuse controls and provider rate limits remain unverified.
+- [x] Implement safe error handling without leaking personal information.
+- [ ] Create privacy notice, consent handling, and data retention policies. Note: Privacy page exists; approved consent and retention policies are incomplete.
+- [ ] Define deletion procedures for outdated QC ID documents.
+- [x] Ensure all database changes produce consistent appointment statuses. Note: Transactional state transitions and database constraints implemented; multi-connection concurrency acceptance remains outstanding.
+- [x] Implement meaningful logging and administrative audit trails.
+- [ ] Configure database backup and recovery procedures.
+- [ ] Review accessibility and security before real patient data is collected.
+
+## 17. Testing and Quality Assurance
+- [x] Set up automated unit and integration testing.
+- [ ] Test patient registration and email verification. Note: Mocked registration tests pass; real email-link flow remains unverified.
+- [ ] Test password reset, login, logout, and session expiration. Note: Auth code and browser tests exist; the complete authenticated lifecycle has not been verified.
+- [x] Test barangay selection and patient profile validation. Note: Unit tests cover phone normalization and required Others detail; not every browser selection.
+- [ ] Test QC ID uploads and restricted document access. Note: Validation, retry and stubbed Storage-policy tests pass; real private Storage upload/access remains unverified.
+- [x] Test patient account approval and rejection. Note: Embedded PostgreSQL tests cover approval, rejection and version guards.
+- [ ] Test appointment booking, approval, cancellation, and rejection. Note: Domain and database tests cover several transitions; full booking/decision/cancellation browser coverage remains outstanding.
+- [ ] Test concurrent booking attempts and overbooking prevention. Note: Sequential capacity and retry tests pass; simultaneous independent database connections have not been tested.
+- [x] Test service schedule and slot availability updates. Note: Embedded PostgreSQL tests cover schedule guards, retry handling and stale updates.
+- [ ] Test inquiry submission, response, and resolution. Note: Draft privacy and publishing are tested; complete submission-to-resolution browser flow remains unverified.
+- [ ] Test all relevant RLS authorization rules. Note: Embedded tests cover ownership, staff guards and document policies; complete real Supabase RLS acceptance remains outstanding.
+- [ ] Test unauthorized access to admin pages and actions. Note: Database authorization tests pass; authenticated browser denial test exists but was not run in this review.
+- [ ] Test mobile and desktop usability. Note: Responsive browser tests exist; representative-user usability testing is not recorded.
+- [ ] Test form errors, network failures, and empty states. Note: Some validation/retry cases are tested; full browser/network failure coverage remains outstanding.
+- [ ] Conduct end-to-end testing of complete patient and admin flows.
+- [ ] Fix bugs and complete user acceptance testing with the project stakeholders.
+
+## 18. Deployment and Production Configuration
+- [x] Create a production-ready build of the Next.js application. Note: Production build passed locally; deployment and launch readiness are separate.
+- [ ] Connect the GitHub repository to a deployment provider such as Vercel.
+- [ ] Configure the deployment environment variables.
+- [ ] Create the production Supabase environment and apply database migrations.
+- [ ] Configure production Supabase authentication redirects.
+- [ ] Configure production email provider and sender settings (Possible cost).
+- [ ] Deploy and verify the live website.
+- [ ] Configure the deployment's generated subdomain.
+- [ ] Purchase/register a custom domain (Optional, Possible cost).
+- [ ] Connect the custom domain to deployment hosting (Optional).
+- [ ] Configure DNS records, such as A or CNAME (Optional).
+- [ ] Verify domain ownership, DNS propagation, and HTTPS (Optional for custom domains).
+- [ ] Configure email sender DNS records (SPF, DKIM, DMARC) if using a custom sending domain.
+- [ ] Test signup, login, appointment submission, and notifications in production.
+- [ ] Configure hosting and database usage alerts.
+- [ ] Set up automatic deployment on production branch updates (Optional).
+
+## 19. Documentation, Handover, and Maintenance
+- [x] Write the project README and setup instructions.
+- [ ] Document database schema and important relationships. Note: Schema is defined in migrations; no separate schema/relationship guide remains in this branch.
+- [ ] Document environment variables and deployment procedure. Note: Environment variables and local production commands are documented; hosted deployment procedure is incomplete.
+- [ ] Write patient-facing user instructions.
+- [x] Write an administrator usage guide. Note: Staff workflows are documented in docs/OPERATIONS.md.
+- [ ] Document backup, restore, and account management procedures. Note: Staff provisioning is documented; backup and restore procedures are not.
+- [ ] Create a bug reporting and maintenance process.
+- [ ] Monitor application errors, availability, and usage after launch.
+- [ ] Review recurring service costs and quota limits.
+- [ ] Document future enhancements and scope changes.
+
+## 20. Research and Capstone Evaluation
+- [x] Prepare a functional prototype for stakeholder review. Note: Application is available for review after backend setup; stakeholder walkthroughs and acceptance are not recorded.
+- [ ] Conduct prototype walkthroughs with health center personnel.
+- [ ] Record feedback and revise system requirements.
+- [ ] Conduct functional and usability tests with representative users.
+- [ ] Implement fixes identified during testing.
+- [ ] Support implementation and observation of system use.
+- [ ] Gather anonymized research and usability data.
+- [ ] Collect System Usability Scale (SUS) and post-assessment survey responses.
+- [ ] Prepare evaluation statistics and results summaries.
+- [ ] Document final system improvements and research findings.

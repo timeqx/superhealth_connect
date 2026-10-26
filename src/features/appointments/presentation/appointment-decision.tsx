@@ -1,0 +1,51 @@
+"use client";
+import { useSnackbar } from "@/shared/ui/snackbar";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { decideAppointment } from "../application/decision-actions";
+import { staffAlternatives } from "../application/staff-actions";
+import { formatDate, formatTime } from "@/shared/lib/time";
+import { Button } from "@/shared/ui/button";
+import { Label } from "@/shared/ui/label";
+import { Textarea } from "@/shared/ui/textarea";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/shared/ui/alert-dialog";
+
+export function AppointmentDecision({ id, expected }: { id: string; expected: string }) {
+  const router = useRouter();
+  const [reason, setReason] = useState("");
+  const [alternatives, setAlternatives] = useState<{ id: string; starts_at: string; ends_at: string }[]>([]);
+  const [target, setTarget] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [decision, setDecision] = useState<"approve" | "reject" | null>(null);
+  const notify = useSnackbar();
+  const [pending, setPending] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const busy = useRef(false);
+  const attempt = useRef<{ payload: string; key: string } | null>(null);
+  async function submit(action: "approve" | "reject") {
+    if (busy.current || saved) return;
+    busy.current = true; setPending(true);
+    const input = { id, expected, decision: action, reason: reason.trim(), target: action === "reject" ? target || null : null };
+    const payload = JSON.stringify(input);
+    if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
+    try {
+      const result = await decideAppointment({ ...input, key: attempt.current.key });
+      notify(result.message, !result.ok);
+      if (result.ok) { setSaved(true); router.refresh(); }
+    } catch {
+      notify("Connection interrupted. Retry the same decision to check whether it was saved.");
+    } finally { busy.current = false; setPending(false); }
+  }
+  return <div className="form">
+    <Button variant="ghost" disabled={pending || saved || loadingSlots} onClick={async () => { setLoadingSlots(true); try { const slots = await staffAlternatives(id); setAlternatives(slots); if (!slots.length) notify("No future alternatives available."); } catch { notify("Alternative sessions could not be loaded. Try again."); } finally { setLoadingSlots(false); } }}>Find alternative session</Button>
+    {alternatives.length > 0 && <label>Suggested session when declining<select value={target} disabled={pending || saved} onChange={e => setTarget(e.target.value)}><option value="">No suggestion</option>{alternatives.map(s => <option value={s.id} key={s.id}>{formatDate(s.starts_at)} · {formatTime(s.starts_at)}</option>)}</select><small>A suggestion does not reserve a place; the patient must submit a new request.</small></label>}
+    <Label htmlFor={`decision-reason-${id}`}>Note to patient (required when declining)</Label>
+    <Textarea id={`decision-reason-${id}`} maxLength={1000} value={reason} disabled={pending || saved} onChange={e => setReason(e.target.value)} placeholder="Explain the decision or provide next steps." />
+    <div className="actions"><Button disabled={pending || saved} onClick={() => setDecision("approve")}>{pending ? "Saving decision…" : "Approve appointment"}</Button><Button variant="outline" disabled={pending || saved || !reason.trim()} onClick={() => setDecision("reject")}>Decline request</Button></div>
+
+    {!saved && <Button variant="ghost" disabled={pending} onClick={() => router.refresh()}>Refresh latest request</Button>}
+    <AlertDialog open={decision !== null} onOpenChange={open => { if (!open) setDecision(null); }}>
+      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{decision === "approve" ? "Schedule this appointment?" : "Decline this appointment request?"}</AlertDialogTitle><AlertDialogDescription>{decision === "approve" ? "This confirms the requested session. It does not check the patient in or issue a queue ticket." : "The reservation will be released and the patient will see your reason. This decision cannot be undone here."}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Go back</AlertDialogCancel><AlertDialogAction variant={decision === "reject" ? "destructive" : "default"} onClick={() => { if (decision) void submit(decision); }}>Confirm decision</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+    </AlertDialog>
+  </div>;
+}
