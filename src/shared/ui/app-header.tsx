@@ -27,10 +27,11 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const staffPortal = pathname.startsWith("/staff/") || pathname === "/admin" || pathname.startsWith("/admin/");
   const staffHeader = role === "admin";
   const links = pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
     ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/history", "History"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
-    : [["/services", "Services"], ["/patient/book", "Book a visit"], ["/staff/sign-in", "Staff portal"]];
+    : [["/services", "Services"], ["/patient/book", "Book a visit"], staffPortal ? ["/sign-in", "Patient portal"] : ["/staff/sign-in", "Staff portal"]];
   const accountAction = role ? (
     <form action={signOut}><Button type="submit" variant="ghost">Sign out</Button></form>
   ) : pending ? (
