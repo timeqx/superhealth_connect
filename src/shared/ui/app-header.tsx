@@ -30,13 +30,13 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
   const staffHeader = role === "admin";
   const links = pending || unavailable ? [] : role === "patient" ? patientLinks : role === "admin"
     ? [["/admin", "Requests"], ["/admin/queue", "Queue"], ["/admin/history", "History"], ["/admin/inquiries", "Inquiries"], ["/admin/reviews", "Accounts"], ["/admin/schedules", "Schedules"], ["/admin/reports", "Reports"]]
-    : [["/services", "Services"], ["/patient/book", "Book a visit"]];
+    : [["/services", "Services"], ["/patient/book", "Book a visit"], ["/staff/sign-in", "Staff portal"]];
   const accountAction = role ? (
     <form action={signOut}><Button type="submit" variant="ghost">Sign out</Button></form>
   ) : pending ? (
     <span className="skeleton h-11 w-24" role="status" aria-label="Loading account" />
   ) : (
-    <Button asChild variant="ghost"><Link href={unavailable ? (pathname.startsWith("/admin") ? "/admin" : "/patient") : "/sign-in"} onClick={() => setOpen(false)}>
+    <Button asChild variant="ghost"><Link href={unavailable ? (pathname.startsWith("/admin") ? "/admin" : "/patient") : pathname.startsWith("/staff/") ? "/staff/sign-in" : "/sign-in"} onClick={() => setOpen(false)}>
       {unavailable ? "My account" : "Sign in"} <ArrowUpRight />
     </Link></Button>
   );
@@ -85,9 +85,6 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
               <nav className="mobile-navigation" aria-label="Mobile navigation">
                 {items}
                 {accountAction}
-                {!role && !pending && <Link href="/admin" onClick={() => setOpen(false)}>
-                  Staff portal
-                </Link>}
               </nav>
             </SheetContent>
           </Sheet>

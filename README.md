@@ -45,12 +45,23 @@ supabase status
 ```
 
 Run `db reset` only against a disposable local database. It applies the migrations
-and draft service catalog in `supabase/`. Use the local URL and keys from `supabase status`.
+and default service catalog in `supabase/`. Use the local URL and keys from `supabase status`.
 Local verification emails are available on port 54324.
 
 An existing hosted project needs all migrations in `supabase/migrations/`, including
 the private `verification` storage bucket. Apply hosted migrations through your database
-release process. Service seeds are unpublished; staff must configure services and sessions.
+release process. The default catalog contains General Consultation, Pre-natal, Dental,
+Laboratory, Family Planning, TB DOTS, and Immunizations (NIP), published and enabled for
+booking. Booking still requires an open session with capacity. Staff can temporarily
+disable booking or hide a service in Services & schedules. The catalog migration retires
+the original demonstration services, including Animal Bite, while preserving history.
+Regular hours default to Monday–Friday, 8 AM–5 PM Asia/Manila, with the existing default
+capacity of 10 patients per day. Staff can edit days, hours and capacity under Services.
+Authenticated booking and schedule pages prepare a rolling 30-day window, so no cron
+job is required. Date-specific closures/edits and sessions referenced by appointments
+are preserved when regular hours change. Use Sessions for a one-day closure, or disable
+online booking to pause a service. Apply both `202610300001_service_catalog.sql` and
+`202610300002_recurring_schedules.sql` before deploying the updated pages.
 
 Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
 URLs and configure Auth SMTP for signup and password recovery. Verification links must
@@ -68,7 +79,7 @@ npm run staff:provision -- --user USER-UUID --employee STAFF-001 --operator OPER
 ```
 
 The command defaults to a dry run. Add `--apply` to save the role and audit entry.
-Staff sign in through the regular sign-in page.
+Patients sign in at `/sign-in`; staff sign in at `/staff/sign-in` using administrator-provisioned accounts. Each sign-in action checks the account role on the server and rejects accounts belonging to the other portal. Staff password recovery starts at `/staff/forgot-password`, and staff sign-out returns to the staff sign-in page. Both portals use the existing Supabase project and browser session; they are separate entry points, not simultaneous independent sessions.
 
 ## Commands
 

@@ -1,9 +1,11 @@
-insert into public.services(slug,name,description) values
-('maternal-child-care','Maternal & Child Care','Support for mothers and growing families.'),
+insert into public.services(slug,name,description,is_published,is_bookable)
+select slug,name,description,true,true from (values
+('general-consultation','General Consultation','Consult the center about your general health concerns.'),
+('pre-natal','Pre-natal','Care and support during pregnancy.'),
+('dental','Dental','Consult the center about dental care.'),
+('laboratory','Laboratory','Visit the center for available laboratory services.'),
 ('family-planning','Family Planning','Plan a visit to discuss family planning services.'),
-('animal-bite-treatment','Animal Bite Treatment','Ask the center about available animal bite treatment services.'),
-('mental-health-support','Mental Health Support','Connect with available mental health support.'),
-('immunizations','Immunizations','Plan your visit for available vaccinations.'),
-('tb-dots','TB DOTS','Ask about the center’s TB DOTS services.'),
-('screening-services','Screening Services','Learn about available health screening services.')
+('immunizations','Immunizations (NIP)','National Immunization Program vaccination services.'),
+('tb-dots','TB DOTS','Ask about the center’s TB DOTS services.')
+) as defaults(slug,name,description)
 on conflict(slug) do nothing;

@@ -27,12 +27,25 @@ export async function saveOperations(kind: "service" | "slot", input: unknown) {
       ({ error } = await actor.client.rpc("update_service", { p_id: p.id, p_published: p.published, p_bookable: p.bookable, p_requirements: p.requirements, p_arrival: p.arrival }));
     } else if (kind === "slot") {
       const p = z.object({ id: z.uuid().nullable(), service: z.uuid(), start: z.string(), end: z.string(), capacity: z.coerce.number().int().min(1).max(500), open: z.boolean(), expected: z.string().nullable(), key: z.uuid() }).parse(input);
-      const start = p.id ? z.iso.datetime({ offset: true }).parse(p.start) : manilaInputToUtc(p.start);
-      const end = p.id ? z.iso.datetime({ offset: true }).parse(p.end) : manilaInputToUtc(p.end);
+      const start = manilaInputToUtc(p.start);
+      const end = manilaInputToUtc(p.end);
       ({ error } = await actor.client.rpc("save_slot", { p_id: p.id, p_service: p.service, p_start: start, p_end: end, p_capacity: p.capacity, p_open: p.open, p_expected: p.expected, p_key: p.key }));
     } else throw new Error("VALIDATION_ERROR");
     if (error) throw error;
     for (const path of ["/admin/schedules", "/services", "/patient/book"]) revalidatePath(path);
     return { ok: true, message: "Changes saved." };
+  } catch (error) { return { ok: false, message: error instanceof z.ZodError ? error.issues[0].message : safeError(error) }; }
+}
+
+export async function saveServiceSchedule(input: unknown) {
+  try {
+    const p = z.object({ service: z.uuid(), open: z.string().regex(/^\d{2}:\d{2}$/), close: z.string().regex(/^\d{2}:\d{2}$/), capacity: z.coerce.number().int().min(1).max(500), days: z.array(z.coerce.number().int().min(0).max(6)).max(7), expected: z.string(), key: z.uuid() }).parse(input);
+    if (p.open >= p.close) return { ok: false, message: "Closing time must be after opening time." };
+    const actor = await getActor();
+    if (!actor || actor.role !== "admin") throw new Error("FORBIDDEN");
+    const { error } = await actor.client.rpc("save_service_schedule", { p_service: p.service, p_open: p.open, p_close: p.close, p_capacity: p.capacity, p_days: p.days, p_expected: p.expected, p_key: p.key });
+    if (error) throw error;
+    for (const path of ["/admin/schedules", "/services", "/patient/book", "/admin/book"]) revalidatePath(path);
+    return { ok: true, message: "Schedule saved. Existing appointments and date-specific overrides keep their settings." };
   } catch (error) { return { ok: false, message: error instanceof z.ZodError ? error.issues[0].message : safeError(error) }; }
 }

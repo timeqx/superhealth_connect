@@ -8,8 +8,10 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 export function AuthForm({
   mode,
+  portal = "patient",
 }: {
   mode: "sign-in" | "forgot" | "reset";
+  portal?: "patient" | "staff";
 }) {
   const {
     register,
@@ -24,7 +26,7 @@ export function AuthForm({
       className="form"
       onSubmit={handleSubmit(async (values) => {
         try {
-          const result = await authenticate(mode, values);
+          const result = await authenticate(mode, values, portal);
           notify(result.message, !result.ok);
           if (result.redirectTo) {
             startNavigation(() => { router.replace(result.redirectTo!); router.refresh(); });

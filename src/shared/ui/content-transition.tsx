@@ -2,7 +2,7 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-const authPaths = new Set(["/sign-in", "/register", "/forgot-password", "/reset-password"]);
+const authPaths = new Set(["/sign-in", "/register", "/forgot-password", "/reset-password", "/staff/sign-in", "/staff/forgot-password", "/staff/reset-password"]);
 
 export function ContentTransition({ children, className = "route-content", changeKey = "", excludeAuth = false }: {
   children: ReactNode; className?: string; changeKey?: string; excludeAuth?: boolean;

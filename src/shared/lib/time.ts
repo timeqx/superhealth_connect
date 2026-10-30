@@ -1,4 +1,7 @@
 export const timeZone = "Asia/Manila";
+export function manilaDateTimeInput(value: string) {
+  return new Date(new Date(value).getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16);
+}
 export function manilaDate(value: string | Date) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,

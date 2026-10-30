@@ -12,6 +12,7 @@ export default async function PatientLayout({
 }) {
   if (!supabaseConfig()) return <SetupNotice />;
   const actor = await requireActor();
+  if (actor.role === "admin") redirect("/admin");
   if (actor.role === "patient" && actor.profile.review_status !== "rejected" && needsRegistration(actor.user.user_metadata)) redirect("/register");
   return <><LiveUpdates userId={actor.user.id} />{children}</>;
 }

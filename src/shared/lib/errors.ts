@@ -8,6 +8,8 @@ const messages: Record<string, string> = {
     "This session is full. Choose another session; your existing appointment has not changed.",
   SLOT_CLOSED:
     "This session is closed or outside the permitted date. Refresh availability.",
+  SESSION_HAS_APPOINTMENTS:
+    "This session already has appointment records. Keep its hours and use the appointment rescheduling workflow to move visits.",
   INVALID_TRANSITION:
     "This record has already moved to another state. Refresh to see its current status.",
   DUPLICATE_REQUEST:

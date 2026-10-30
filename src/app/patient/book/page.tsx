@@ -29,6 +29,8 @@ export default async function BookPage({
   if (error) throw error;
   const selected = services.find((s) => s.id === service);
   if (selected) {
+    const { error: scheduleError } = await client.rpc("ensure_service_sessions", { p_service: selected.id });
+    if (scheduleError) throw new Error("Service sessions could not be prepared.");
     const { data: slots, error } = await client.rpc("slot_availability", {
       p_service: selected.id,
     });

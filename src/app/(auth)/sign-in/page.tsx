@@ -5,8 +5,8 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const { registered } = await searchParams;
   return (
     <div className="sign-in-content">
-      <PageTitle eyebrow="WELCOME BACK" title="Care starts here.">
-        Sign in to manage your visits. Staff use the same secure sign-in.
+      <PageTitle eyebrow="PATIENT PORTAL" title="Care starts here.">
+        Sign in to manage your visits, appointments, and account.
       </PageTitle>
       {registered === "1" && <p className="notice" role="status">Registration complete. Sign in with your verified email and password. You can request appointments after staff approves your QC ID.</p>}
 
@@ -19,6 +19,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
         Create an account
       </ButtonLink>
       </Card>
+      <Link className="sign-in-recovery" href="/staff/sign-in">Staff member? Sign in to the staff portal</Link>
     </div>
   );
 }

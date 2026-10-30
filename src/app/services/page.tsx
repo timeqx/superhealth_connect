@@ -5,6 +5,7 @@ import { supabaseConfig } from "@/shared/supabase/config";
 import { serverClient } from "@/shared/supabase/server";
 import { Badge, ButtonLink, Card, PageTitle } from "@/shared/ui/components";
 import { ServiceCard } from "@/shared/ui/care-components";
+import { formatTime } from "@/shared/lib/time";
 export default async function Services() {
   const configured = Boolean(supabaseConfig());
   let services: Service[] = [];
@@ -36,8 +37,9 @@ export default async function Services() {
             index={index}
           >
             <Badge>
-              {s.is_bookable ? "BOOKING OPEN" : "NOT OPEN FOR BOOKING"}
+              {s.is_bookable ? "BOOKING OPEN" : "TEMPORARILY UNAVAILABLE"}
             </Badge>
+            <p className="caption">{s.weekdays.length ? `${s.weekdays.map(day => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]).join(", ")} · ${formatTime(`2000-01-01T${s.opening_time}+08:00`)}–${formatTime(`2000-01-01T${s.closing_time}+08:00`)}` : "No regular service days set"}</p>
             <p>{s.requirements}</p>
             {s.is_bookable && (
               <ButtonLink href={`/patient/book?service=${s.id}`}>

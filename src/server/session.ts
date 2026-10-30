@@ -30,7 +30,7 @@ export const getActor = cache(async () => {
 export async function requireActor(admin = false) {
   if (!supabaseConfig()) redirect("/setup");
   const actor = await getActor();
-  if (!actor) redirect("/sign-in");
+  if (!actor) redirect(admin ? "/staff/sign-in" : "/sign-in");
   if (admin && actor.role !== "admin") redirect("/access-denied");
   return actor;
 }

@@ -12,6 +12,10 @@ export default async function StaffBooking({ searchParams }: { searchParams: Pro
   const services = await client.from("services").select("id,name").eq("is_published", true).eq("is_bookable", true).order("name");
   if (services.error) throw new Error("Services could not be loaded.");
   const service = services.data.find(s => s.id === params.service)?.id;
+  if (service) {
+    const { error } = await client.rpc("ensure_service_sessions", { p_service: service });
+    if (error) throw new Error("Service sessions could not be prepared.");
+  }
   const patients = name.length >= 2 ? await client.from("profiles").select("id,first_name,last_name").eq("review_status", "approved").ilike("last_name", `${name}%`).order("last_name").order("id").limit(20) : null;
   const slots = service ? await client.rpc("slot_availability", { p_service: service }) : null;
   if (patients?.error || slots?.error) throw new Error("Booking options could not be loaded.");
