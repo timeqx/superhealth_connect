@@ -2,13 +2,29 @@
 
 ## Staff workspace
 
-`/admin/schedules` uses the staff-only `save_slot` and `update_service` RPCs.
-Create sessions using Manila local times. Existing session time/service cannot be
-edited: close it to new requests and create another session. Existing reservations
-are retained when a session closes. Capacity cannot fall below reserved visits.
-Services support publication, booking availability, requirements and arrival rules;
-creating/renaming service definitions is available after the staff-management migration. Service
-settings currently use last-write-wins; session updates detect stale timestamps.
+`/admin/schedules` supports service creation with available weekdays, opening/closing
+times, appointment length in minutes and patients per time slot. All times are Manila
+local times. A service open 8–10 AM with 30-minute slots and capacity 3 offers four
+appointment times for up to 12 patients. Each patient submits a separate appointment
+request; pending requests consume capacity immediately. The database locks each slot
+when reserving capacity and refuses bookings once it is full.
+
+New services stay unpublished until staff enables publication and online booking.
+Regular hours generate complete intervals over the next 30 days, including today's
+remaining times. Appointment length must fit inside opening hours. A leftover interval
+shorter than the appointment length is not offered. No selected weekdays disables
+automatic generation. Existing services keep their previous full-day configuration until
+staff saves a new appointment length and capacity. This requires migration
+`202611160001_appointment_time_slots.sql` and its predecessors.
+
+Saving regular hours rebuilds empty future dates. Dates with appointment history,
+manual sessions or individual overrides retain all their time slots. Use Sessions to
+change or close an individual slot; closing one slot does not close the whole date.
+Slot hours can be edited only before the slot starts and while it has no appointment
+records. Existing reservations are retained when a slot closes, and capacity cannot
+fall below reserved visits. Service definitions, regular hours and slot edits detect
+stale timestamps and support retry-safe saves. Publication, booking availability,
+requirements and arrival settings currently use last-write-wins.
 Only publish policies approved by center staff. Seed values are not approved policies.
 
 `/admin/reports` provides exact counts by current status for requests submitted
@@ -35,6 +51,17 @@ still applies to every subscriber. Cross-browser acceptance and a five-second
 queue-update target remain unverified.
 
 ## Additional staff workflows
+
+New appointment requests stay pending until staff approves them. `/admin` lists
+pending requests oldest first and supports individual review or bulk approval/decline
+of up to 25 selected requests on the current page. Search matches reference, patient
+or service within that page. Bulk decline requires a note that each selected patient
+can read. Each request is checked independently; stale or unavailable requests show
+an error while successful decisions are retained. Repeating an unchanged decision
+uses the original retry key to avoid duplicate notifications. Patients see **Approved**
+on their dashboard and appointment list after approval, plus an appointment notification.
+Check-in is available only after approval. Bulk decisions use the existing appointment
+database functions and do not require an additional migration.
 
 `/admin/history` supports status/reference filtering, cancellation and no-show
 decisions with reasons. `/admin/book` creates pending requests on behalf of approved

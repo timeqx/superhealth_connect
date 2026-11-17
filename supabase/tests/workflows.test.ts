@@ -27,6 +27,8 @@ beforeAll(async () => {
     "202610200002_workflows.sql",
     "202610200003_accounts_operations.sql",
     "20261021064654_staff_management.sql",
+    "202610300002_recurring_schedules.sql",
+    "202611160001_appointment_time_slots.sql",
   ])
     await db.exec(readFileSync(`supabase/migrations/${name}`, "utf8"));
   await db.exec(
@@ -38,8 +40,8 @@ afterAll(async () => {
 });
 describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integration)", () => {
   it("protects service creation and replays staff changes", async () => {
-    const args = [null, "Synthetic new service", "synthetic-new", "Synthetic only", null, "90000000-0000-4000-8000-000000000001"];
-    const sql = "select public.save_service_definition($1,$2,$3,$4,$5,$6) as value";
+    const args = [null, "Synthetic new service", "synthetic-new", "Synthetic only", null, "90000000-0000-4000-8000-000000000001", "08:00", "17:00", 30, 3, [1, 2, 3, 4, 5]];
+    const sql = "select public.save_service_definition($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) as value";
     await actor(a);
     await expect(db.query(sql, args)).rejects.toThrow("FORBIDDEN");
     await actor(staff);
@@ -47,7 +49,7 @@ describe("PostgreSQL functions and RLS (embedded PostgreSQL, not Supabase integr
     const second = await db.query<{value: {id: string}}>(sql,args);
     expect(first.rows[0].value.id).toBe(second.rows[0].value.id);
     expect(first.rows[0].value.is_published).toBe(false);
-    await expect(db.query(sql,[first.rows[0].value.id,"Changed","synthetic-new","Synthetic only","2000-01-01","90000000-0000-4000-8000-000000000002"])).rejects.toThrow("CONFLICT");
+    await expect(db.query("select public.save_service_definition($1,$2,$3,$4,$5,$6)",[first.rows[0].value.id,"Changed","synthetic-new","Synthetic only","2000-01-01","90000000-0000-4000-8000-000000000002"])).rejects.toThrow("CONFLICT");
   });
   it("edits drafts privately and publishes once", async () => {
     await actor(a);

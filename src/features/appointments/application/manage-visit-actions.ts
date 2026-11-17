@@ -3,6 +3,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getActor } from "@/server/session";
 import { safeError } from "@/shared/lib/errors";
+import { loadAvailableSlots } from "../infrastructure/slot-availability";
 export async function manageVisit(input: unknown) {
   try {
     const p = z.object({ id: z.uuid(), expected: z.iso.datetime({ offset: true }), key: z.uuid(), action: z.enum(["cancel", "reschedule"]), reason: z.string().trim().max(1000), target: z.uuid().optional() }).parse(input);
@@ -24,8 +25,9 @@ export async function visitAlternatives(id: string) {
     const { data, error } = await actor.client.from("appointments").select("slot_id,service_slots!appointments_slot_id_fkey(service_id)").eq("id", id).eq("patient_id", actor.user.id).single();
     if (error) throw error;
     const slot = data.service_slots as unknown as { service_id: string };
-    const result = await actor.client.rpc("slot_availability", { p_service: slot.service_id });
-    if (result.error) throw result.error;
-    return { ok: true as const, slots: (result.data as import("../domain/appointment").Slot[]).filter(s => s.id !== data.slot_id) };
+    const { error: scheduleError } = await actor.client.rpc("ensure_service_sessions", { p_service: slot.service_id });
+    if (scheduleError) throw scheduleError;
+    const slots = await loadAvailableSlots(actor.client, slot.service_id);
+    return { ok: true as const, slots: slots.filter(s => s.id !== data.slot_id) };
   } catch (error) { return { ok: false as const, message: safeError(error) }; }
 }

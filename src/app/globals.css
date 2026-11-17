@@ -904,6 +904,32 @@ tr:last-child td {
   flex: 1;
   max-width: 400px;
 }
+.request-bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.request-bulk-toolbar .actions { margin-left: auto; }
+.request-select-all { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.request-select-all input, .request-selection-cell input { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; }
+.request-selection-cell { width: 44px; padding-right: 0; }
+.request-error { margin-top: 8px; color: var(--destructive); max-width: 260px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .request-bulk-toolbar .actions { margin-left: 0; width: 100%; }
+  .request-table.table-wrap tr { grid-template-columns: 24px minmax(0, 1fr); }
+  .request-table.table-wrap .request-selection-cell { grid-column: 1; grid-row: 1 / 6; width: auto; }
+  .request-table.table-wrap td.request-reference-cell,
+  .request-table.table-wrap td.request-patient-cell,
+  .request-table.table-wrap td.request-time-cell,
+  .request-table.table-wrap td.request-status-cell,
+  .request-table.table-wrap td:last-child { grid-column: 2; grid-row: auto; }
+  .request-reference-cell, .request-patient-cell { overflow-wrap: anywhere; }
+}
 .inquiry-message {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

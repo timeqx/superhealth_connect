@@ -43,11 +43,11 @@ export function SlotPicker({
         />
       </label>
       <p className="caption">
-        Choose a date to see published sessions. Dates with no sessions are
+        Choose a date to see appointment time slots. Dates with no time slots are
         unavailable.
       </p>
       <fieldset className="slot-list">
-        <legend>Available sessions</legend>
+        <legend>Available time slots</legend>
         {sessions.map((s) => {
           const unavailable =
             s.remaining <= 0 || Date.parse(s.starts_at) <= Date.parse(asOf);
@@ -70,8 +70,8 @@ export function SlotPicker({
                   {s.remaining <= 0
                     ? "Full · no spaces available"
                     : unavailable
-                      ? "Unavailable · session has started"
-                      : `${s.remaining} spaces available`}
+                      ? "Unavailable · time slot has started"
+                      : `${s.remaining} ${s.remaining === 1 ? "space" : "spaces"} available`}
                 </small>
               </span>
             </label>
@@ -79,7 +79,7 @@ export function SlotPicker({
         })}
         {!sessions.length && (
           <p className="notice">
-            No sessions available on this date. Choose another date or service.
+            No time slots available on this date. Choose another date or service.
           </p>
         )}
       </fieldset>
@@ -114,7 +114,7 @@ export function BookingForm({
               if (!selected || selected.remaining <= 0) return;
               if (Date.parse(selected.starts_at) <= Date.parse(asOf)) {
                 setMessage(
-                  "This session has started. Please choose another session.",
+                  "This time slot has started. Please choose another time slot.",
                 );
                 return;
               }
@@ -143,7 +143,7 @@ export function BookingForm({
             <p>
               {review
                 ? "Check your details before sending your request to the center."
-                : "Choose a date and an available session. All times are Philippine time."}
+                : "Choose a date and an available time slot. Each patient reserves one space. All times are Philippine time."}
             </p>
             {!review ? (
               <SlotPicker
@@ -194,7 +194,7 @@ export function BookingForm({
                   disabled={pending}
                   onClick={() => setReview(false)}
                 >
-                  Change session
+                  Change time slot
                 </Button>
               )}
             </div>
@@ -210,11 +210,11 @@ export function BookingForm({
                 ? formatDate(selected.starts_at)
                 : "Choose your visit date"}
             </dd>
-            <dt>Session</dt>
+            <dt>Time slot</dt>
             <dd>
               {selected
                 ? `${formatTime(selected.starts_at)}–${formatTime(selected.ends_at)}`
-                : "Select an available session"}
+                : "Select an available time slot"}
             </dd>
             <dt>Location</dt>
             <dd>Batasan Hills Super Health Center</dd>

@@ -13,7 +13,7 @@ export default async function Schedules({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const page = Math.min(10000, Math.max(1, Number(params.page) || 1)) | 0;
   const [services, slots] = await Promise.all([
-    client.from("services").select("id,name,slug,description,updated_at,requirements,arrival_minutes,is_published,is_bookable,opening_time,closing_time,daily_capacity,weekdays").order("name"),
+    client.from("services").select("id,name,slug,description,updated_at,requirements,arrival_minutes,is_published,is_bookable,opening_time,closing_time,slot_duration_minutes,slot_capacity,weekdays").order("name"),
     client.from("service_slots").select("id,service_id,starts_at,ends_at,capacity,is_open,updated_at", { count: "exact" }).gte("ends_at", new Date().toISOString()).order("starts_at").order("id").range((page - 1) * 20, page * 20 - 1),
   ]);
   if (services.error || slots.error) throw new Error("Schedules could not be loaded.");

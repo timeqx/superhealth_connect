@@ -32,14 +32,16 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <PageTitle eyebrow="STAFF WORKSPACE" title="Appointment requests">
-        Authorized staff view · Oldest pending requests first
+        Review pending requests and approve appointments before patients attend.
+        Select requests below to approve or decline several at once.
       </PageTitle>
       <RequestTable requests={requests} />
       <p className="notice">{overdue ? `${overdue.count ?? 0} pending requests exceed the configured ${hours}-hour review deadline.` : "Review deadline is not configured. Requests remain pending until staff decides."}</p>
       <nav aria-label="Request pages">{page > 1 && <Link href={`?page=${page - 1}`}>Previous · </Link>}Page {page}{page * 25 < (count ?? 0) && <Link href={`?page=${page + 1}`}> · Next</Link>}</nav>
       <p className="caption">
-        Showing 25 requests per page, oldest first. Approval confirms the session;
-        queue tickets are issued separately at staff check-in.
+        Showing 25 requests per page, oldest first. Bulk decisions apply only to
+        selected requests in the current list. Patients see Approved once staff
+        confirms a request; queue tickets are issued separately at check-in.
       </p>
     </>
   );

@@ -9,6 +9,19 @@ export const appointmentStates = [
   "no_show",
 ] as const;
 export type AppointmentState = (typeof appointmentStates)[number];
+const statusLabels: Record<AppointmentState, string> = {
+  pending: "Pending approval",
+  scheduled: "Approved",
+  checked_in: "Checked in",
+  in_service: "In service",
+  completed: "Completed",
+  rejected: "Declined",
+  cancelled: "Cancelled",
+  no_show: "No show",
+};
+export function appointmentStatusLabel(status: string) {
+  return statusLabels[status as AppointmentState] ?? status.replaceAll("_", " ");
+}
 const transitions: Record<AppointmentState, readonly AppointmentState[]> = {
   pending: ["scheduled", "rejected", "cancelled"],
   scheduled: ["checked_in", "cancelled", "no_show"],

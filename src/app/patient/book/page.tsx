@@ -1,7 +1,7 @@
 import { requireActor } from "@/server/session";
 import { Badge, ButtonLink, Card, PageTitle } from "@/shared/ui/components";
 import { BookingForm } from "@/features/appointments/presentation/booking-form";
-import type { Slot } from "@/features/appointments/domain/appointment";
+import { loadAvailableSlots } from "@/features/appointments/infrastructure/slot-availability";
 import { BookingStepper } from "@/shared/ui/care-components";
 export default async function BookPage({
   searchParams,
@@ -31,20 +31,17 @@ export default async function BookPage({
   if (selected) {
     const { error: scheduleError } = await client.rpc("ensure_service_sessions", { p_service: selected.id });
     if (scheduleError) throw new Error("Service sessions could not be prepared.");
-    const { data: slots, error } = await client.rpc("slot_availability", {
-      p_service: selected.id,
-    });
-    if (error) throw error;
+    const slots = await loadAvailableSlots(client, selected.id);
     return (
       <div className="stack">
         <BookingForm
           service={selected.name}
-          slots={slots as Slot[]}
+          slots={slots}
           asOf={new Date().toISOString()}
         />
         {!slots.length && (
           <p>
-            No available sessions. Please choose another service or check again
+            No available time slots. Please choose another service or check again
             later.
           </p>
         )}

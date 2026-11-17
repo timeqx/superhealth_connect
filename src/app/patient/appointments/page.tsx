@@ -7,6 +7,7 @@ import { formatDate, formatTime } from "@/shared/lib/time";
 import { AppointmentStatusBadge } from "@/shared/ui/care-components";
 import { ManageVisit } from "@/features/appointments/presentation/manage-visit";
 import { PatientQueue } from "@/features/queue/patient-queue";
+import { appointmentStatusLabel } from "@/features/appointments/domain/appointment";
 export default async function Appointments({ searchParams }: { searchParams: Promise<{ page?: string; status?: string }> }) {
   const { client, user } = await requireActor();
   const params = await searchParams;
@@ -31,7 +32,7 @@ export default async function Appointments({ searchParams }: { searchParams: Pro
         issued at check-in.
       </PageTitle>
       <div className="visits-toolbar">
-        <Form action="" scroll={false} className="visits-filter"><label>Visit status<select key={status} name="status" defaultValue={status}><option value="">All visits</option>{states.map(s => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}</select></label><Button type="submit">Filter visits</Button></Form>
+        <Form action="" scroll={false} className="visits-filter"><label>Visit status<select key={status} name="status" defaultValue={status}><option value="">All visits</option>{states.map(s => <option key={s} value={s}>{appointmentStatusLabel(s)}</option>)}</select></label><Button type="submit">Filter visits</Button></Form>
         <ButtonLink href="/patient/book">Request an appointment</ButtonLink>
       </div>
       <div className="visit-list">
@@ -46,6 +47,8 @@ export default async function Appointments({ searchParams }: { searchParams: Pro
               <div>{slot?.starts_at && <><strong>{formatDate(slot.starts_at)}</strong><p>{formatTime(slot.starts_at)} &middot; Philippine time</p></>}</div>
               <AppointmentStatusBadge status={a.status} />
               <div className="visit-actions">{["pending", "scheduled"].includes(a.status) && <ManageVisit id={a.id} expected={a.updated_at} asOf={new Date().toISOString()} />}</div>
+              {a.status === "pending" && <p className="caption visit-extra">Waiting for staff approval. Your appointment is not yet confirmed.</p>}
+              {a.status === "scheduled" && <p className="caption visit-extra">Staff approved this appointment. Check in with staff on arrival to receive your queue ticket.</p>}
               {a.decision_reason && <p className="notice visit-extra">{a.decision_reason}</p>}
             {a.suggested && <Card className="visit-extra"><h3>Staff suggested an alternative</h3><p>{new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" }).format(new Date((a.suggested as unknown as { starts_at: string }).starts_at))}</p><p>This is not reserved. Check availability and submit a new request.</p><ButtonLink href="/patient/book">View available sessions</ButtonLink></Card>}
             {["checked_in", "in_service"].includes(a.status) && <div className="visit-extra"><PatientQueue id={a.id} /></div>}

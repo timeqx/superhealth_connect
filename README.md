@@ -55,13 +55,20 @@ Laboratory, Family Planning, TB DOTS, and Immunizations (NIP), published and ena
 booking. Booking still requires an open session with capacity. Staff can temporarily
 disable booking or hide a service in Services & schedules. The catalog migration retires
 the original demonstration services, including Animal Bite, while preserving history.
-Regular hours default to Monday–Friday, 8 AM–5 PM Asia/Manila, with the existing default
-capacity of 10 patients per day. Staff can edit days, hours and capacity under Services.
-Authenticated booking and schedule pages prepare a rolling 30-day window, so no cron
-job is required. Date-specific closures/edits and sessions referenced by appointments
-are preserved when regular hours change. Use Sessions for a one-day closure, or disable
-online booking to pause a service. Apply both `202610300001_service_catalog.sql` and
-`202610300002_recurring_schedules.sql` before deploying the updated pages.
+New services include available days, opening/closing times, appointment length and
+patients per time slot. For example, 8–10 AM with 30-minute appointments and capacity 3
+creates four time slots, each accepting three separate patients. Only complete intervals
+are created; leftover minutes before closing are not offered. Creation defaults to
+Monday–Friday, 8 AM–5 PM Asia/Manila, 30-minute slots and one patient per slot. New
+services remain drafts until staff publishes them and enables online booking.
+Authenticated booking and schedule pages prepare a rolling 30-day window, including
+today's future slots, so no cron job is required. Pending requests reserve a place;
+cancelled or rejected requests release it. Regular schedule edits rebuild empty future
+dates while preserving whole dates with appointment history, manual sessions or individual
+overrides. Close individual slots in Sessions, or disable online booking to pause a service.
+Apply all migrations, including `202611160001_appointment_time_slots.sql`, before deploying
+the updated pages. The migration retains existing services' full-day slots and capacity;
+staff can choose a shorter appointment length under Services when ready.
 
 Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
 URLs and configure Auth SMTP for signup and password recovery. Verification links must

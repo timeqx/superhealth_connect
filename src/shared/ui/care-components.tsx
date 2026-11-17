@@ -11,13 +11,12 @@ import {
 import type { ReactNode } from "react";
 import { Card, ButtonLink } from "./components";
 import { formatDate, formatTime } from "@/shared/lib/time";
+import { appointmentStatusLabel } from "@/features/appointments/domain/appointment";
 export function AppointmentStatusBadge({ status }: { status: string }) {
-  const label =
-    status === "pending" ? "Pending approval" : status.replaceAll("_", " ");
   return (
     <span className="status-badge" data-status={status}>
       <span aria-hidden="true" />
-      {label}
+      {appointmentStatusLabel(status)}
     </span>
   );
 }
@@ -103,8 +102,8 @@ export function AppointmentCard({
       )}
       {status === "scheduled" && (
         <p>
-          Check in with staff on arrival. Your queue ticket is issued at the
-          center.
+          Staff approved your appointment. Check in with staff on arrival to
+          receive your queue ticket.
         </p>
       )}
     </Card>
