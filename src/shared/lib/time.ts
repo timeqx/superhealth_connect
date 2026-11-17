@@ -11,7 +11,7 @@ export function manilaDate(value: string | Date) {
   }).format(new Date(value));
 }
 export function formatDate(value: string | Date) {
-  return new Intl.DateTimeFormat("en-PH", {
+  return new Intl.DateTimeFormat("en-US", {
     timeZone,
     weekday: "short",
     day: "numeric",

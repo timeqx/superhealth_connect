@@ -8,7 +8,7 @@ import { ScheduleFields, type ScheduleSettings } from "./schedule-fields";
 
 export type ServiceSchedule = ScheduleSettings & { id: string; updated_at: string };
 
-export function ServiceScheduleForm({ service }: { service: ServiceSchedule }) {
+export function ServiceScheduleForm({ service, previewContainer }: { service: ServiceSchedule; previewContainer?: HTMLElement | null }) {
   const [pending, setPending] = useState(false);
   const attempt = useRef({ payload: "", key: "" });
   const notify = useSnackbar();
@@ -29,9 +29,9 @@ export function ServiceScheduleForm({ service }: { service: ServiceSchedule }) {
     finally { setPending(false); }
   }}>
     <fieldset disabled={pending} className="form-grid">
-      <ScheduleFields schedule={service} />
-      <p className="caption col-span-full">Time slots open automatically for the next 30 days. Changes apply to future dates without appointments or manual overrides. Dates with existing appointments or manual overrides keep their settings. Close individual slots in Sessions, or turn off online booking to pause the entire service.</p>
-      <Button type="submit">{pending ? "Saving…" : "Save appointment schedule"}</Button>
+      <ScheduleFields schedule={service} previewContainer={previewContainer} />
+      <p className="caption col-span-full">Sessions open automatically for the next 30 days. Changes apply to future dates without appointments or manual overrides. Dates with existing appointments or manual overrides keep their settings. Close individual sessions in Sessions, or turn off online booking to pause the entire service.</p>
+      <Button type="submit">{pending ? "Saving…" : "Save session schedule"}</Button>
     </fieldset>
   </form>;
 }

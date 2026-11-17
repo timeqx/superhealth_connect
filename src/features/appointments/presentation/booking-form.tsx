@@ -5,7 +5,7 @@ import type { Slot } from "../domain/appointment";
 import { formatDate, formatTime, manilaDate } from "@/shared/lib/time";
 import { book } from "@/server/actions";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import { DateField } from "@/shared/ui/date-field";
 import { Card } from "@/shared/ui/components";
 import { BookingStepper } from "@/shared/ui/care-components";
 import { CalendarDays } from "lucide-react";
@@ -30,24 +30,24 @@ export function SlotPicker({
     <div className="stack">
       <label className="field">
         Visit date · Philippine time
-        <Input
-          type="date"
+        <DateField
+          aria-label="Visit date · Philippine time"
           value={date}
           min={dates[0]}
           max={dates.at(-1)}
           disabled={!dates.length}
-          onChange={(e) => {
-            setDate(e.target.value);
+          onValueChange={(value) => {
+            setDate(value);
             onChange("");
           }}
         />
       </label>
       <p className="caption">
-        Choose a date to see appointment time slots. Dates with no time slots are
-        unavailable.
+        Choose a date, then a session. Each session has its own patient slots;
+        your request reserves one place in the session you choose.
       </p>
       <fieldset className="slot-list">
-        <legend>Available time slots</legend>
+        <legend>Choose a session</legend>
         {sessions.map((s) => {
           const unavailable =
             s.remaining <= 0 || Date.parse(s.starts_at) <= Date.parse(asOf);
@@ -68,10 +68,10 @@ export function SlotPicker({
                 </strong>
                 <small>
                   {s.remaining <= 0
-                    ? "Full · no spaces available"
+                    ? "Full · no patient slots available"
                     : unavailable
-                      ? "Unavailable · time slot has started"
-                      : `${s.remaining} ${s.remaining === 1 ? "space" : "spaces"} available`}
+                      ? "Unavailable · session has started"
+                      : `${s.remaining} patient ${s.remaining === 1 ? "slot" : "slots"} available`}
                 </small>
               </span>
             </label>
@@ -79,7 +79,7 @@ export function SlotPicker({
         })}
         {!sessions.length && (
           <p className="notice">
-            No time slots available on this date. Choose another date or service.
+            No sessions available on this date. Choose another date or service.
           </p>
         )}
       </fieldset>
@@ -114,7 +114,7 @@ export function BookingForm({
               if (!selected || selected.remaining <= 0) return;
               if (Date.parse(selected.starts_at) <= Date.parse(asOf)) {
                 setMessage(
-                  "This time slot has started. Please choose another time slot.",
+                  "This session has started. Please choose another session.",
                 );
                 return;
               }
@@ -139,11 +139,11 @@ export function BookingForm({
               }
             }}
           >
-            <h2>{review ? "One last look." : "Find a time for your visit."}</h2>
+            <h2>{review ? "One last look." : "Choose a session for your visit."}</h2>
             <p>
               {review
                 ? "Check your details before sending your request to the center."
-                : "Choose a date and an available time slot. Each patient reserves one space. All times are Philippine time."}
+                : "Select the session time that suits you, such as 8:00–9:00 AM or 9:00–10:00 AM. All times are Philippine time."}
             </p>
             {!review ? (
               <SlotPicker
@@ -164,12 +164,12 @@ export function BookingForm({
                     <strong>{service}</strong>
                     <p>
                       {selected &&
-                        `${formatDate(selected.starts_at)} · ${formatTime(selected.starts_at)}`}
+                        `${formatDate(selected.starts_at)} · ${formatTime(selected.starts_at)}–${formatTime(selected.ends_at)}`}
                     </p>
                   </div>
                 </div>
                 <p className="notice">
-                  Submitting reserves capacity while staff reviews your request.
+                  Submitting reserves one patient slot in this session while staff reviews your request.
                   It is not a confirmed appointment or queue ticket.
                 </p>
               </>
@@ -194,7 +194,7 @@ export function BookingForm({
                   disabled={pending}
                   onClick={() => setReview(false)}
                 >
-                  Change time slot
+                  Change session
                 </Button>
               )}
             </div>
@@ -210,11 +210,11 @@ export function BookingForm({
                 ? formatDate(selected.starts_at)
                 : "Choose your visit date"}
             </dd>
-            <dt>Time slot</dt>
+            <dt>Session</dt>
             <dd>
               {selected
                 ? `${formatTime(selected.starts_at)}–${formatTime(selected.ends_at)}`
-                : "Select an available time slot"}
+                : "Select an available session"}
             </dd>
             <dt>Location</dt>
             <dd>Batasan Hills Super Health Center</dd>

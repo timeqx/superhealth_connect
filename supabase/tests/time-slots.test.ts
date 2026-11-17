@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 
 const db = new PGlite();
 const staff = randomUUID();
-const patients = Array.from({ length: 4 }, () => randomUUID());
+const patients = Array.from({ length: 7 }, () => randomUUID());
 const legacyService = randomUUID();
 const legacySlot = randomUUID();
 const everyDay = [0, 1, 2, 3, 4, 5, 6];
@@ -98,6 +98,27 @@ describe("service appointment time slots (embedded PostgreSQL)", () => {
     expect(await daySlots(legacyService, 1)).toMatchObject([{ id: legacySlot, capacity: 10 }]);
   });
 
+  it("splits an unbooked legacy full-day schedule into hourly sessions while preserving a booked date", async () => {
+    await actor(staff);
+    const service = (await db.query<Service>("select *,updated_at::text from public.services where id=$1", [legacyService])).rows[0];
+    await db.exec("reset role");
+    await db.query(`insert into public.service_slots(service_id,starts_at,ends_at,capacity,schedule_date)
+      values($1,((now() at time zone 'Asia/Manila')::date+2+time '08:00') at time zone 'Asia/Manila',
+      ((now() at time zone 'Asia/Manila')::date+2+time '17:00') at time zone 'Asia/Manila',10,
+      (now() at time zone 'Asia/Manila')::date+2) on conflict(service_id,starts_at) do nothing`, [legacyService]);
+    await actor(patients[0]);
+    const bookedDate = await daySlots(legacyService, 2);
+    expect(bookedDate).toHaveLength(1);
+    await db.query("select public.request_appointment($1,$2)", [bookedDate[0].id, randomUUID()]);
+    await actor(staff);
+    await db.query(scheduleSql, [legacyService, "08:00", "16:00", 60, 6, everyDay, service.updated_at, randomUUID()]);
+    const sessions = await daySlots(legacyService, 1);
+    expect(sessions).toHaveLength(8);
+    expect(sessions.some(session => session.id === legacySlot)).toBe(false);
+    expect(sessions.every(session => session.capacity === 6 && new Date(session.ends_at).getTime() - new Date(session.starts_at).getTime() === 60 * 60 * 1000)).toBe(true);
+    expect(await daySlots(legacyService, 2)).toEqual(bookedDate);
+  });
+
   it("creates schedule settings atomically, replays creation, and preserves them during details edits", async () => {
     const args = definitionArgs("09:00", "12:00", 20, 3, [1, 3, 5]);
     await actor(patients[0]);
@@ -128,6 +149,39 @@ describe("service appointment time slots (embedded PostgreSQL)", () => {
     await actor(patients[0]);
     await db.query("select public.ensure_service_sessions($1)", [service.id]);
     expect(await daySlots(service.id, 1)).toEqual(slots);
+  });
+
+  it("offers eight hourly sessions from 8 AM to 4 PM with six independent patient places each", async () => {
+    const service = await createService("08:00", "16:00", 60, 6);
+    const sessions = await daySlots(service.id, 1);
+    const times = (await db.query<{ start: string; end: string; capacity: number }>(
+      "select (starts_at at time zone 'Asia/Manila')::time::text as start,(ends_at at time zone 'Asia/Manila')::time::text as end,capacity from public.service_slots where id=any($1) order by starts_at",
+      [sessions.map(session => session.id)],
+    )).rows;
+    expect(times).toEqual([
+      { start: "08:00:00", end: "09:00:00", capacity: 6 },
+      { start: "09:00:00", end: "10:00:00", capacity: 6 },
+      { start: "10:00:00", end: "11:00:00", capacity: 6 },
+      { start: "11:00:00", end: "12:00:00", capacity: 6 },
+      { start: "12:00:00", end: "13:00:00", capacity: 6 },
+      { start: "13:00:00", end: "14:00:00", capacity: 6 },
+      { start: "14:00:00", end: "15:00:00", capacity: 6 },
+      { start: "15:00:00", end: "16:00:00", capacity: 6 },
+    ]);
+    expect(sessions.reduce((total, session) => total + session.capacity, 0)).toBe(48);
+    for (const patient of patients.slice(0, 6)) {
+      await actor(patient);
+      await db.query("select public.request_appointment($1,$2)", [sessions[0].id, randomUUID()]);
+    }
+    await actor(patients[6]);
+    await expect(db.query("select public.request_appointment($1,$2)", [sessions[0].id, randomUUID()])).rejects.toThrow("SLOT_FULL");
+    const available = (await db.query<{ id: string; remaining: number }>(
+      "select id,remaining from public.slot_availability($1) where id=any($2) order by starts_at",
+      [service.id, sessions.map(session => session.id)],
+    )).rows;
+    expect(available.map(session => session.remaining)).toEqual([0, 6, 6, 6, 6, 6, 6, 6]);
+    await expect(db.query("select public.request_appointment($1,$2)", [sessions[1].id, randomUUID()])).resolves.toBeDefined();
+    expect((await db.query<{ remaining: number }>("select remaining from public.slot_availability($1) where id=$2", [service.id, sessions[1].id])).rows[0].remaining).toBe(5);
   });
 
   it("makes all 30 days available even when there are more than 180 time slots", async () => {

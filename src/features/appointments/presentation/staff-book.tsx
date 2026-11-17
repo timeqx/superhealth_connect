@@ -4,7 +4,8 @@ import { staffBook } from "../application/staff-actions";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { formatDate, formatTime } from "@/shared/lib/time";
-export function StaffBook({ patients, slots }: { patients: { id: string; first_name: string; last_name: string }[]; slots: { id: string; starts_at: string; remaining: number }[] }) {
+import type { Slot } from "../domain/appointment";
+export function StaffBook({ patients, slots }: { patients: { id: string; first_name: string; last_name: string }[]; slots: Slot[] }) {
   const [pending, setPending] = useState(false); const [saved, setSaved] = useState(false); const [message, setMessage] = useState("");
   const attempt = useRef({ payload: "", key: "" });
   return <form className="form" onSubmit={async e => {
@@ -17,5 +18,5 @@ export function StaffBook({ patients, slots }: { patients: { id: string; first_n
     try { const result = await staffBook({ ...input, key: attempt.current.key }); setMessage(result.message); if (result.ok) setSaved(true); }
     catch { setMessage("Connection interrupted. Retry unchanged to confirm the request."); }
     finally { setPending(false); }
-  }}><fieldset className="stack" disabled={pending || saved}><label>Patient<select name="patient" required><option value="">Choose the verified patient</option>{patients.map(p => <option key={p.id} value={p.id}>{p.first_name} {p.last_name} · {p.id.slice(-6)}</option>)}</select></label><label>Session · Manila time<select name="slot" required><option value="">Choose a session</option>{slots.map(s => <option key={s.id} value={s.id} disabled={s.remaining <= 0}>{formatDate(s.starts_at)} · {formatTime(s.starts_at)} · {s.remaining} available</option>)}</select></label><label>Reason for booking on behalf<Textarea name="reason" required maxLength={1000} /></label><Button type="submit">{pending ? "Submitting…" : "Request visit for patient"}</Button></fieldset><p role="status">{message}</p></form>;
+  }}><fieldset className="stack" disabled={pending || saved}><label>Patient<select name="patient" required><option value="">Choose the verified patient</option>{patients.map(p => <option key={p.id} value={p.id}>{p.first_name} {p.last_name} · {p.id.slice(-6)}</option>)}</select></label><label>Session · Manila time<select name="slot" required><option value="">Choose a session</option>{slots.map(s => <option key={s.id} value={s.id} disabled={s.remaining <= 0}>{formatDate(s.starts_at)} · {formatTime(s.starts_at)}–{formatTime(s.ends_at)} · {s.remaining <= 0 ? "Full" : `${s.remaining} patient ${s.remaining === 1 ? "slot" : "slots"} available`}</option>)}</select></label><p className="caption">Each request reserves one patient slot in the selected session.</p><label>Reason for booking on behalf<Textarea name="reason" required maxLength={1000} /></label><Button type="submit">{pending ? "Submitting…" : "Request visit for patient"}</Button></fieldset><p role="status">{message}</p></form>;
 }

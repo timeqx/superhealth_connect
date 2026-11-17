@@ -3,18 +3,31 @@
 ## Staff workspace
 
 `/admin/schedules` supports service creation with available weekdays, opening/closing
-times, appointment length in minutes and patients per time slot. All times are Manila
-local times. A service open 8–10 AM with 30-minute slots and capacity 3 offers four
-appointment times for up to 12 patients. Each patient submits a separate appointment
+times, session duration in minutes and patient slots per session. All times are Manila
+local times. A service open 8 AM–4 PM with 60-minute sessions and capacity 6 offers eight
+separate sessions for up to 48 patients. Use the **1 hour** duration shortcut or enter 60
+minutes; the daily preview lists 8–9 AM, 9–10 AM and every later session through 3–4 PM,
+each with six patient slots. Each patient chooses one session and submits a separate appointment
 request; pending requests consume capacity immediately. The database locks each slot
-when reserving capacity and refuses bookings once it is full.
+when reserving capacity and refuses bookings once that session is full. Other sessions
+on the same day retain their own capacity.
+
+Upcoming sessions are grouped into one summary per service and Manila date, with
+session count, time range, configured capacity and open/closed counts. Date fields use
+MM/DD/YYYY (Month/Day/Year), with a calendar button for selection. The upcoming-session
+date filter applies immediately; Previous day, Next day and Today switch dates without
+an extra submit step. All dates restores all upcoming dates. Adjacent dates are prefetched
+for faster navigation. Expand a summary
+to view and edit individual sessions. Pagination keeps each daily group together.
 
 New services stay unpublished until staff enables publication and online booking.
 Regular hours generate complete intervals over the next 30 days, including today's
-remaining times. Appointment length must fit inside opening hours. A leftover interval
-shorter than the appointment length is not offered. No selected weekdays disables
+remaining times. Session duration must fit inside opening hours. A leftover interval
+shorter than the session duration is not offered. No selected weekdays disables
 automatic generation. Existing services keep their previous full-day configuration until
-staff saves a new appointment length and capacity. This requires migration
+staff saves a new session duration and capacity. For an existing full-day service,
+set opening time to 08:00, closing time to 16:00, duration to 60 and capacity to 6,
+then save the session schedule. This requires migration
 `202611160001_appointment_time_slots.sql` and its predecessors.
 
 Saving regular hours rebuilds empty future dates. Dates with appointment history,

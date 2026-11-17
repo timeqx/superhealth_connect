@@ -43,7 +43,7 @@ export function ServiceDefinition({ service }: { service?: { id: string; name: s
       <label>Description<Textarea name="description" defaultValue={service?.description} required maxLength={2000} /></label>
       {!service && <>
         <ScheduleFields key={scheduleVersion} />
-        <p className="caption col-span-full">Once published and enabled for booking, this service will offer time slots for the next 30 days. Each patient books one space in a time slot.</p>
+        <p className="caption col-span-full">Once published and enabled for booking, these sessions will open for the next 30 days. Patients choose a session, such as 8–9 AM, and reserve one of its patient slots.</p>
       </>}
       <Button type="submit">{pending ? "Saving…" : service ? "Save service details" : "Create draft service"}</Button>
     </fieldset>

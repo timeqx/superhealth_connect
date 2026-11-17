@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveOperations } from "./actions";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { DateTimeField } from "@/shared/ui/date-field";
 import { Textarea } from "@/shared/ui/textarea";
 import { manilaDateTimeInput } from "@/shared/lib/time";
 export type Service = { id: string; name: string; requirements: string; arrival_minutes: number; is_published: boolean; is_bookable: boolean };
@@ -33,8 +34,8 @@ export function OperationsForm({ service, slot, services }: { service?: Service;
     <fieldset disabled={pending} className="form-grid">
       {service ? <><label>Patient requirements<Textarea name="requirements" defaultValue={service.requirements} required maxLength={2000} /></label><label>Arrival minutes before session<Input name="arrival" type="number" min={0} max={240} defaultValue={service.arrival_minutes} required /></label><label className="checkbox-field"><input type="checkbox" name="published" defaultChecked={service.is_published} /> Published in service directory</label><label className="checkbox-field"><input type="checkbox" name="bookable" defaultChecked={service.is_bookable} /> Available for online booking</label><p className="caption">Turn off online booking to mark this service temporarily unavailable. Keep it published so patients can still see it. Existing appointments are retained.</p></> : <>
         {!slot && <label>Service<select name="service" required>{services?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
-        <label>Start · Manila time<Input name="start" type="datetime-local" defaultValue={slot ? manilaDateTimeInput(slot.starts_at) : undefined} required /></label><label>End · Manila time<Input name="end" type="datetime-local" defaultValue={slot ? manilaDateTimeInput(slot.ends_at) : undefined} required /></label>
-        <label>Patients per time slot<Input type="number" name="capacity" min={1} max={500} step={1} defaultValue={slot?.capacity ?? 1} required /></label><label className="checkbox-field"><input name="open" type="checkbox" defaultChecked={slot?.is_open ?? false} /> Open for requests</label>
+        <div className="field">Start · Manila time<DateTimeField label="Start" name="start" defaultValue={slot ? manilaDateTimeInput(slot.starts_at) : undefined} required /></div><div className="field">End · Manila time<DateTimeField label="End" name="end" defaultValue={slot ? manilaDateTimeInput(slot.ends_at) : undefined} required /></div>
+        <label>Patient slots per session<Input type="number" name="capacity" min={1} max={500} step={1} defaultValue={slot?.capacity ?? 1} required /></label><label className="checkbox-field"><input name="open" type="checkbox" defaultChecked={slot?.is_open ?? false} /> Open for requests</label>
       </>}
       <Button type="submit">{pending ? "Saving…" : service ? "Save service" : slot ? "Save session" : "Create session"}</Button>
     </fieldset>

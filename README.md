@@ -55,9 +55,11 @@ Laboratory, Family Planning, TB DOTS, and Immunizations (NIP), published and ena
 booking. Booking still requires an open session with capacity. Staff can temporarily
 disable booking or hide a service in Services & schedules. The catalog migration retires
 the original demonstration services, including Animal Bite, while preserving history.
-New services include available days, opening/closing times, appointment length and
-patients per time slot. For example, 8–10 AM with 30-minute appointments and capacity 3
-creates four time slots, each accepting three separate patients. Only complete intervals
+New services include available days, opening/closing times, session duration and
+patient slots per session. For example, 8 AM–4 PM with one-hour sessions and capacity 6
+creates eight sessions (8–9 AM, 9–10 AM, through 3–4 PM), each accepting six separate
+patients, for 48 patients that day. The creation form previews every session and its
+capacity. Patients choose one session; filling it does not fill the other sessions. Only complete intervals
 are created; leftover minutes before closing are not offered. Creation defaults to
 Monday–Friday, 8 AM–5 PM Asia/Manila, 30-minute slots and one patient per slot. New
 services remain drafts until staff publishes them and enables online booking.
@@ -68,7 +70,7 @@ dates while preserving whole dates with appointment history, manual sessions or 
 overrides. Close individual slots in Sessions, or disable online booking to pause a service.
 Apply all migrations, including `202611160001_appointment_time_slots.sql`, before deploying
 the updated pages. The migration retains existing services' full-day slots and capacity;
-staff can choose a shorter appointment length under Services when ready.
+staff can choose a shorter session duration under Services when ready.
 
 Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
 URLs and configure Auth SMTP for signup and password recovery. Verification links must
