@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 151" role="img" aria-label="SuperHealth Connect">
+  <rect width="148" height="151" rx="5" fill="#10645b" />
+  <path
+    d="M72.5 42.5C62.2 31.8 49.1 32.5 39.2 39.1 26.3 47.7 22.4 63.8 31.5 77.2c6.5 9.5 24.5 27.8 37.4 40.2a5 5 0 0 0 7 0c12.9-12.4 30.9-30.7 37.4-40.2 9.1-13.4 5.2-29.5-7.7-38.1-9.9-6.6-23-7.3-33.3 3.4Z"
+    fill="none"
+    stroke="#fff"
+    stroke-width="8.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M31 78h29l7-14 7 31 10-34 7 17h26"
+    fill="none"
+    stroke="#fff"
+    stroke-width="8.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
