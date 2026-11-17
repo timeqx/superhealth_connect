@@ -6,7 +6,10 @@ const config: NextConfig = {
   agentRules: false,
   devIndicators: false,
   logging: { serverFunctions: false },
-  experimental: { serverActions: { bodySizeLimit: "6mb" } },
+  experimental: {
+    agentUpgrade: "security",
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   async headers() {
     return [
       {
