@@ -2,11 +2,55 @@
 
 import { useRef, useState } from "react";
 import { useRouter, unstable_rethrow } from "next/navigation";
-import { createStaffAccount, changeStaffRole } from "../application/staff-management-actions";
+import { createStaffAccount, changeStaffRole, manageStaffAccount } from "../application/staff-management-actions";
+import { DetailDialog } from "@/shared/ui/detail-dialog";
 import type { StaffAccount } from "../domain/staff-management";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { useSnackbar } from "@/shared/ui/snackbar";
+
+export function StaffAccountTools({ account, currentUserId }: { account: StaffAccount; currentUserId: string }) {
+  const [pending, setPending] = useState(false);
+  const busy = useRef(false);
+  const router = useRouter();
+  const notify = useSnackbar();
+  async function submit(kind: "details" | "password" | "delete", form: HTMLFormElement) {
+    if (busy.current) return;
+    busy.current = true; setPending(true);
+    try {
+      const result = await manageStaffAccount(kind, { ...Object.fromEntries(new FormData(form)), id: account.id, expected: account.provisioned_at });
+      notify(result.message, !result.ok);
+      if (result.ok) form.reset();
+      router.refresh();
+    } catch (error) { unstable_rethrow(error); notify("The change could not be confirmed. Refresh before retrying.", true); }
+    finally { busy.current = false; setPending(false); }
+  }
+  return <div className="actions">
+    {!account.disabled_at && <>
+      <DetailDialog title="Edit account details" description={account.email || "Staff account"} label="Edit details">
+        <form onSubmit={e => { e.preventDefault(); void submit("details", e.currentTarget); }}><fieldset disabled={pending} className="form-grid">
+          <label>First name<Input name="first" defaultValue={account.first_name} required maxLength={80} /></label>
+          <label>Last name<Input name="last" defaultValue={account.last_name} required maxLength={80} /></label>
+          <label>Email address<Input name="email" type="email" defaultValue={account.email || ""} required maxLength={254} /></label>
+          <label>Employee ID<Input name="employeeId" defaultValue={account.employee_id || ""} maxLength={80} /></label>
+          <Button type="submit">{pending ? "Saving…" : "Save details"}</Button>
+        </fieldset></form>
+      </DetailDialog>
+      <DetailDialog title="Set new password" description={`Set a password for ${account.email || "this account"}. No email link is required.`} label="New password">
+        <form onSubmit={e => { e.preventDefault(); void submit("password", e.currentTarget); }}><fieldset disabled={pending} className="form-grid">
+          <label>New password<Input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={128} /></label>
+          <Button type="submit">{pending ? "Saving…" : "Set password"}</Button>
+        </fieldset></form>
+      </DetailDialog>
+    </>}
+    {account.id !== currentUserId && <DetailDialog title="Delete account" description={`Delete ${account.email || "this account"}? Sign-in access will be removed. Historical activity will be retained. This cannot be undone here.`} label="Delete account">
+      <form onSubmit={e => { e.preventDefault(); void submit("delete", e.currentTarget); }}>
+        <label className="checkbox-field"><input type="checkbox" required disabled={pending} /> I confirm that this account should be deleted.</label>
+        <Button type="submit" variant="destructive" disabled={pending}>{pending ? "Deleting…" : "Confirm deletion"}</Button>
+      </form>
+    </DetailDialog>}
+  </div>;
+}
 
 export function CreateStaffAccountForm() {
   const [pending, setPending] = useState(false);

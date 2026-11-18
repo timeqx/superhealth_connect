@@ -48,7 +48,7 @@ beforeAll(async () => {
   for (const name of [
     "202610200001_foundation.sql", "202610200002_workflows.sql", "202610200003_accounts_operations.sql",
     "20261021064654_staff_management.sql", "202610300002_recurring_schedules.sql",
-    "202611160001_appointment_time_slots.sql", "202611180001_staff_roles.sql", "202611180002_staff_account_management.sql",
+    "202611160001_appointment_time_slots.sql", "202611180001_staff_roles.sql", "202611180002_staff_account_management.sql", "202611180005_staff_account_editing.sql",
   ]) await db.exec(readFileSync(`supabase/migrations/${name}`, "utf8"));
   for (const id of [admin, patient, staff]) await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())", [id, `${id}@example.test`]);
   await db.query("update public.user_roles set role='admin' where user_id=$1", [admin]);
@@ -153,6 +153,36 @@ describe("admin staff account management", () => {
     await expect(db.query("select public.update_staff_role($1,'owner',$2)", [staff, staffRole.provisioned_at])).rejects.toThrow("VALIDATION_ERROR");
     await db.exec("reset role");
     await db.query("update public.user_roles set disabled_at=null where user_id=$1", [staff]);
+  });
+
+  it("edits details atomically and rejects unauthorized metadata changes", async () => {
+    const id = randomUUID();
+    await createAuthAccount(id, provision("staff"));
+    const before = await roleOf(id);
+    const edit = { actor_id: admin, expected: before.provisioned_at, kind: "details", first: "Edited", last: "Name", employeeId: "EDIT-1", key: randomUUID() };
+    await db.query("update auth.users set raw_app_meta_data=raw_app_meta_data || jsonb_build_object('staff_edit',$2::jsonb) where id=$1", [id, JSON.stringify(edit)]);
+    expect((await db.query("select first_name,last_name from public.profiles where id=$1", [id])).rows[0]).toEqual({ first_name: "Edited", last_name: "Name" });
+    expect((await roleOf(id)).employee_id).toBe("EDIT-1");
+    await expect(db.query("update auth.users set raw_app_meta_data=raw_app_meta_data || jsonb_build_object('staff_edit',$2::jsonb) where id=$1", [id, JSON.stringify({ ...edit, key: randomUUID() })])).rejects.toThrow("CONFLICT");
+    await expect(db.query("update auth.users set raw_app_meta_data=raw_app_meta_data || jsonb_build_object('staff_edit',$2::jsonb) where id=$1", [id, JSON.stringify({ ...edit, actor_id: patient, key: randomUUID() })])).rejects.toThrow("FORBIDDEN");
+    const latest = await roleOf(id);
+    await db.query("update auth.users set raw_app_meta_data=raw_app_meta_data || jsonb_build_object('staff_edit',$2::jsonb) where id=$1", [id, JSON.stringify({ actor_id: admin, expected: latest.provisioned_at, kind: "password", key: randomUUID() })]);
+    expect((await db.query("select metadata from public.audit_logs where entity_id=$1 and action='set_staff_password'", [id])).rows).toEqual([{ metadata: {} }]);
+  });
+
+  it("restricts deletion and disables access before Auth deletion", async () => {
+    const id = randomUUID();
+    await createAuthAccount(id, provision("staff"));
+    const before = await roleOf(id);
+    await asUser(patient);
+    await expect(db.query("select public.prepare_staff_deletion($1,$2)", [id, before.provisioned_at])).rejects.toThrow("FORBIDDEN");
+    await asUser(admin);
+    await db.query("select public.prepare_staff_deletion($1,$2)", [id, before.provisioned_at]);
+    await asUser(id);
+    expect((await db.query("select private.is_active() as active")).rows[0]).toEqual({ active: false });
+    const own = await roleOf(admin);
+    await asUser(admin);
+    await expect(db.query("select public.prepare_staff_deletion($1,$2)", [admin, own.provisioned_at])).rejects.toThrow("SELF_DELETE");
   });
 
   it("blocks last-admin demotion and allows self-demotion only with another active admin", async () => {

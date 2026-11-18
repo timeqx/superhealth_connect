@@ -5,7 +5,7 @@ vi.mock("@/server/session", () => ({ getActor: mocks.actor }));
 vi.mock("@/shared/supabase/privileged", () => ({ authAdminClient: mocks.privileged }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 vi.mock("next/navigation", () => ({ redirect: (path: string) => { mocks.redirect(path); throw new Error(`NEXT_REDIRECT:${path}`); } }));
-import { changeStaffRole, createStaffAccount } from "./staff-management-actions";
+import { changeStaffRole, createStaffAccount, manageStaffAccount } from "./staff-management-actions";
 
 const adminId = "10000000-0000-4000-8000-000000000001";
 const targetId = "10000000-0000-4000-8000-000000000002";
@@ -16,8 +16,10 @@ function setup(role: string | null = "admin") {
   const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
   const createUser = vi.fn().mockResolvedValue({ data: { user: { id: targetId } }, error: null });
   mocks.actor.mockResolvedValue(role ? { role, user: { id: adminId }, client: { rpc } } : null);
-  mocks.privileged.mockReturnValue({ auth: { admin: { createUser } } });
-  return { rpc, createUser };
+  const updateUserById = vi.fn().mockResolvedValue({ error: null });
+  const deleteUser = vi.fn().mockResolvedValue({ error: null });
+  mocks.privileged.mockReturnValue({ auth: { admin: { createUser, updateUserById, deleteUser } } });
+  return { rpc, createUser, updateUserById, deleteUser };
 }
 
 beforeEach(() => vi.resetAllMocks());
@@ -126,5 +128,35 @@ describe("admin staff role changes", () => {
     const { rpc } = setup();
     expect((await changeStaffRole({ id: targetId, role: "staff", expected, ...invalid })).ok).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("staff account editing and deletion", () => {
+  it.each(["patient", "staff", null])("blocks %s before privileged edits", async role => {
+    const { updateUserById, deleteUser } = setup(role);
+    for (const kind of ["details", "password", "delete"] as const) {
+      expect((await manageStaffAccount(kind, { ...input, id: targetId, expected })).ok).toBe(false);
+    }
+    expect(updateUserById).not.toHaveBeenCalled();
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+  it("changes password without copying it into metadata or the response", async () => {
+    const { updateUserById } = setup();
+    const result = await manageStaffAccount("password", { id: targetId, expected, password: input.password });
+    expect(result.ok).toBe(true);
+    const payload = updateUserById.mock.calls[0][1];
+    expect(payload.password).toBe(input.password);
+    expect(JSON.stringify(payload.app_metadata)).not.toContain(input.password);
+    expect(result.message).not.toContain(input.password);
+  });
+  it("preserves history and does not delete Auth accounts when the guard fails", async () => {
+    const { rpc, deleteUser } = setup();
+    rpc.mockResolvedValueOnce({ data: true, error: null }).mockResolvedValueOnce({ error: { message: "LAST_ADMIN" } });
+    expect((await manageStaffAccount("delete", { id: targetId, expected })).ok).toBe(false);
+    expect(deleteUser).not.toHaveBeenCalled();
+    rpc.mockResolvedValue({ data: true, error: null });
+    expect((await manageStaffAccount("delete", { id: targetId, expected })).ok).toBe(true);
+    expect(deleteUser).toHaveBeenCalledWith(targetId, true);
   });
 });

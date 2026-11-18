@@ -31,8 +31,7 @@ clears the password after successful creation.
 
 Staff receives Requests, Queue, Inquiries, and Reports. Admin receives every portal
 tab. The account list shows both roles and allows changes between them for active
-accounts. It does not convert patient accounts, reactivate disabled accounts, or
-reset existing passwords. Duplicate email addresses do not overwrite an existing
+accounts. It does not convert patient accounts or reactivate disabled accounts. Duplicate email addresses do not overwrite an existing
 account. After an interrupted create request, refresh the list before retrying to
 check whether the account was created.
 
@@ -232,3 +231,16 @@ your local test lifecycle. Traces/screenshots/video are disabled to avoid storin
 credentials. Do not run simultaneously with the public E2E server (shared build
 directory). Appointment, upload/review, email, reconnect and multi-connection race
 journeys still need broader acceptance coverage.
+
+
+## Staff account edits and deletion
+
+Apply `202611180005_staff_account_editing.sql` after preceding migrations.
+The Staff tab offers Edit details (name, email, employee ID), New password, and
+Delete account. Passwords are set directly without an email link and are never
+included in audit metadata. Email edits are confirmed by the admin.
+Deletion requires confirmation and uses Auth soft deletion to preserve historical
+references. Access is disabled first; if Auth deletion fails, the account remains
+visible as disabled and Delete account can be retried. Deleted accounts are hidden
+from the directory. An admin cannot delete their own signed-in account; another
+admin must do it. The last active admin remains protected.

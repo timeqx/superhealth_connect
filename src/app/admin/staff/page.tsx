@@ -1,7 +1,7 @@
 import { requireActor } from "@/server/session";
 import { Card, Badge, PageTitle } from "@/shared/ui/components";
 import { Pagination, pageNumber } from "@/shared/ui/pagination";
-import { CreateStaffAccountForm, StaffAccountRoleForm } from "@/features/accounts/presentation/staff-management";
+import { CreateStaffAccountForm, StaffAccountRoleForm, StaffAccountTools } from "@/features/accounts/presentation/staff-management";
 import type { StaffAccount } from "@/features/accounts/domain/staff-management";
 
 export default async function Staff({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
@@ -34,6 +34,7 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
               <Badge>{account.role === "admin" ? "Admin" : "Staff"}</Badge>
             </div>
             {account.disabled_at ? <p className="notice">This account is disabled. Portal access is unavailable.</p> : <StaffAccountRoleForm account={account} currentUserId={user.id} />}
+            <StaffAccountTools account={account} currentUserId={user.id} />
           </Card>;
         })}
         {!accounts.length && <Card><p>No staff accounts on this page.</p></Card>}
