@@ -72,6 +72,17 @@ Apply all migrations, including `202611160001_appointment_time_slots.sql`, befor
 the updated pages. The migration retains existing services' full-day slots and capacity;
 admins can choose a shorter session duration under Services when ready.
 
+Portal navigation badges require `202611180006_portal_badges.sql`. Notifications count
+unread updates; Inquiries counts conversations with unread incoming messages for each
+signed-in user. Opening a conversation marks its displayed updates and matching patient
+notifications as read. Private drafts do not count. Requests and Accounts count all pending
+decisions, including items on other pages; opening those tabs does not clear their counts.
+Accounts remains available only to admins. Zero counts are hidden, and existing live updates
+refresh the badges as messages arrive or staff approve or decline submissions.
+The patient Notifications page also offers **Mark all as read**, covering every page
+and refreshing the unread badge. Apply `202611180007_mark_all_notifications_read.sql`
+to enable this action.
+
 Keep email confirmation enabled. Allow `APP_URL/auth/callback` in Supabase Auth redirect
 URLs and configure Auth SMTP for signup and password recovery. Verification links must
 open in the same browser profile that started registration. Email verification and admin

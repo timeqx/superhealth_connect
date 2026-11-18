@@ -5,11 +5,13 @@ import { Card, PageTitle } from "@/shared/ui/components";
 import { AppointmentStatusBadge } from "@/shared/ui/care-components";
 import { DetailDialog } from "@/shared/ui/detail-dialog";
 import { InquiryReply } from "@/features/inquiries/presentation/inquiry-reply";
+import { InquiryReadMarker } from "@/features/inquiries/presentation/inquiry-read-marker";
+import { inquiryReadThrough } from "@/features/inquiries/read-state";
 export default async function Inquiries() {
   const { client, user } = await requireActor();
   const { data, error } = await client
     .from("inquiries")
-    .select("id,subject,status,inquiry_messages(id,author_id,body,is_draft,created_at)")
+    .select("id,subject,status,inquiry_messages(id,author_id,body,is_draft,created_at,updated_at,published_at)")
     .eq("patient_id", user.id)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -32,6 +34,7 @@ export default async function Inquiries() {
               <div className="record-summary"><h3>{i.subject}</h3><p className="message-preview">{messages.at(-1)?.body || "No published messages yet."}</p></div>
               <AppointmentStatusBadge status={i.status} />
               <DetailDialog title={i.subject} description="Your messages and published staff replies, oldest first." label="View conversation">
+                <InquiryReadMarker id={i.id} through={inquiryReadThrough(messages, user.id)} />
                 <AppointmentStatusBadge status={i.status} />
                 {messages.map(m => <ConversationMessage key={m.id} name={m.author_id === user.id ? "You" : "Health center staff"} staff={m.author_id !== user.id} createdAt={m.created_at}>{m.body}</ConversationMessage>)}
                 <InquiryReply id={i.id} />

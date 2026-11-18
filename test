@@ -1,0 +1,140 @@
+# Add unread and pending badges
+
+> in the tabs like in patient portal notifications and inquiries, and in staff portal like request, inquiries, accounts, there should be a badge and number inside it to indicate what it not read yet for notifications and inquiries updates, and in request, accounts to be approve how many it is not yet answered like approve or declined.
+
+<details><summary>16 previous messages</summary>
+
+> I’ll check how the portal tabs track unread updates and pending approvals, then add numbered badges that update when items are read or resolved.
+>
+> <details><summary>Ran 4 commands</summary>
+>
+> - Ran `Get-Location; rg --files -g AGENTS.md -g package.json -g '*Portal*' -g '*portal*' -g '*Notification*' -g '*Inquiry*' -g '*Account*' -g '*Request*' -g '*Tabs*' -g '*tab*' -g '*notification*' -g '*inquir*' -g '*request*' -g '*account*' -g '!node_modules' -g '!package-lock.json' -g '!dist'`
+> - Ran `Get-Content 'C:/Users/Osorio/.agents/skills/context7-mcp/SKILL.md'; Get-Content 'C:/Users/Osorio/.codex/plugins/cache/openai-curated-remote/sites/1.1.6/skills/sites/SKILL.md'`
+> - Ran `git status --short; rg --files -g AGENTS.md -g '!node_modules' -g '!dist' -g '!\.next'; Get-Content package.json; Get-Content src/shared/ui/workspace-tabs.tsx`
+> - Ran `rg -n "WorkspaceTabs|unread|read_at|last_read|Notifications|Inquiries|Requests|Accounts|pending" src supabase/migrations supabase/tests -g '!*.snap'; rg --files src/app src/server src/features/inquiries supabase/tests; Get-ChildItem -Force -Name`
+>
+> </details>
+>
+> Notifications already track whether they’ve been read. I’m checking inquiry threads next so their badges count unseen updates, while Requests and Accounts count items still awaiting a decision. I’m also using the Context7 skill’s documentation guidance for the framework changes.
+>
+> <details><summary>Ran 3 commands, searched the web</summary>
+>
+> Searched the web for `site.nextjs.org docs app api reference functions revalidatePath layout router refresh ...`
+>
+> - Ran `Get-Content src/shared/ui/app-header.tsx; Get-Content src/shared/ui/workspace-nav.tsx; Get-Content src/app/layout.tsx; Get-Content src/app/patient/layout.tsx; Get-Content src/app/admin/layout.tsx; Get-Content src/server/session.ts; Get-Content src/features/accounts/domain/roles.ts; Get-Content src/server/actions.ts`
+>
+> - Ran `Get-Content src/app/patient/inquiries/page.tsx; Get-Content src/app/admin/inquiries/page.tsx; Get-Content src/features/inquiries/presentation/inquiry-thread.tsx; Get-Content src/features/inquiries/presentation/inquiry-reply.tsx; Get-Content src/features/inquiries/application-actions.ts; Get-Content src/app/patient/notifications/page.tsx; Get-Content src/app/admin/reviews/page.tsx; Get-Content src/app/admin/page.tsx`
+>
+> - Ran `Get-Content supabase/migrations/202610200001_foundation.sql; Get-Content supabase/migrations/202610200003_accounts_operations.sql; Get-Content supabase/migrations/202611180001_staff_roles.sql; Get-Content vitest.database.config.ts; Get-Content supabase/tests/accounts.test.ts; Get-Content vitest.config.ts; Get-Content playwright.auth.config.ts; Get-Content src/shared/supabase/database.generated.ts -TotalCount 100; foreach ($instructionPath in @('D:/AGENTS.md','D:/tom/AGENTS.md','D:/tom/superhealth_connect/AGENTS.md')) { if (Test-Path -LiteralPath $instructionPath) { Get-Content -LiteralPath $instructionPath } }`
+>
+> </details>
+>
+> <details><summary>Ran 2 commands</summary>
+>
+> - Ran `Get-Content src/features/notifications/live-updates.tsx; Get-Content src/features/notifications/read-button.tsx; Get-Content src/shared/ui/session-header.tsx; Get-Content src/shared/ui/detail-dialog.tsx; Get-Content src/features/inquiries/presentation/inquiry-thread.tsx; Get-Content src/features/inquiries/application-actions.ts; Get-Content src/features/inquiries/presentation/inquiry-reply.tsx; Get-Content src/app/admin/inquiries/page.tsx; Get-Content src/shared/supabase/server.ts; rg -n 'WorkspaceNav|navigation a|workspace-nav|header-inner' src tests; Get-Content vitest.database.config.ts`
+> - Ran `Get-Content src/app/admin/reviews/page.tsx; Get-Content src/app/admin/page.tsx; Get-Content src/app/patient/notifications/page.tsx; Get-Content src/server/portal-actions.test.ts; rg -n 'create_inquiry|reply_inquiry|inquiry_messages|notifications|private.require' supabase/migrations/202610200003_accounts_operations.sql supabase/migrations/202610200001_foundation.sql supabase/migrations/202611180001_staff_roles.sql; Get-Content src/shared/supabase/browser.ts; Get-Content tests/authenticated/*.spec.ts -TotalCount 40`
+>
+> </details>
+>
+> I’ll hide badges when their count reaches zero. Inquiry badges will clear when the conversation is opened; Requests and Accounts will keep their counts until an item is approved or declined. The counts will cover all pages, not just the items currently displayed.
+>
+> <details><summary>Ran 2 commands</summary>
+>
+> - Ran `Get-Content supabase/migrations/202611180001_staff_roles.sql | Select-Object -Skip 180 -First 45; rg -n 'publication|replica|inquiry_messages' supabase/migrations; rg --files tests scripts | Select-Object -First 65; Get-Content src/features/accounts/application/verification-actions.ts -ErrorAction SilentlyContinue`
+> - Ran `Get-Content src/shared/ui/sheet.tsx; Get-Content src/shared/lib/errors.ts; Get-Content src/features/notifications/actions.ts; Get-Content src/features/accounts/presentation/review-panel.tsx; Get-Content src/features/appointments/presentation/appointment-decision.tsx; Get-Content supabase/tests/roles.test.ts -TotalCount 70; Get-Content src/app/globals.css | Select-Object -Skip 175 -First 35; Get-Content README.md -TotalCount 75; Get-Content tests/e2e/foundation.spec.ts; Get-Content playwright.config.ts`
+>
+> </details>
+>
+> <details><summary>Created 2 files, edited 3 files</summary>
+>
+> - Wrote `./src/app/admin/inquiries/page.tsx` (+4 -2)
+> - Wrote `./src/app/patient/inquiries/page.tsx` (+4 -1)
+> - Wrote `./src/features/inquiries/application-actions.ts` (+15 -0)
+> - Wrote `./src/features/inquiries/presentation/inquiry-read-marker.tsx` (+35 -0)
+> - Wrote `./src/features/inquiries/read-state.ts` (+26 -0)
+>
+> </details>
+>
+> <details><summary>Created 2 files, ran a command</summary>
+>
+> - Wrote `./src/features/inquiries/read-actions.test.ts` (+40 -0)
+> - Wrote `./src/features/inquiries/read-state.test.ts` (+30 -0)
+> - Ran `npm.cmd test`
+>
+> </details>
+>
+> The badges are now wired into desktop and mobile navigation. Opening an inquiry marks only the displayed updates as read, so a newer reply stays unread. The application tests pass; I’m checking database permissions and read tracking next.
+>
+> <details><summary>Ran 5 commands</summary>
+>
+> - Ran `npm.cmd run typecheck; git diff --check`
+> - Ran `git diff --stat; git status --short; Get-Content supabase/migrations/202611180006_portal_badges.sql; Get-Content src/features/notifications/portal-badges.ts; Get-Content src/shared/ui/navigation-badge.tsx; Get-Content src/shared/ui/session-header.tsx; Get-Content src/features/notifications/live-updates.tsx; git diff -- src/app/globals.css`
+> - Ran `npm.cmd run lint`
+> - Ran `npm.cmd run test:db`
+> - Ran `Get-Content tests/authenticated/workspace.spec.ts -TotalCount 115; Get-Content src/shared/ui/session-header.test.ts; Get-Content src/shared/ui/app-header.tsx | Select-Object -First 82; Get-Content supabase/tests/portal-badges.test.ts; rg -n 'touch_updated|updated_at=|updated_at :=' supabase/migrations/202610200001_foundation.sql; Get-Content next.config.ts; rg -n 'env|E2E_TEST' src/shared/supabase/config.ts`
+>
+> </details>
+>
+> <details><summary>Ran a command</summary>
+>
+> - Ran `npm.cmd run build`
+>
+> </details>
+>
+> The database tests pass, including draft handling, separate read state for each user, and preserving replies that arrive after a conversation was loaded. Type checking and lint also pass. I’m running the production build now. The feature needs the new migration applied; authenticated browser testing isn’t available without a local Supabase test setup.
+>
+> <details><summary>Edited a file, ran a command</summary>
+>
+> - Wrote `./README.md` (+8 -0)
+> - Ran `git diff --check; Get-Content supabase/migrations/202611180006_portal_badges.sql | Select-Object -Skip 76 -First 15; Get-Content src/app/globals.css | Select-Object -Skip 145 -First 32; Get-Content src/app/globals.css | Select-Object -Skip 1040 -First 30`
+>
+> </details>
+>
+> The production build compiled successfully, then stopped on a security warning for the project’s current Next.js version. I’m retrying the build as the tool suggests. The badge changes have passed 185 application tests and 74 database tests.
+>
+> <details><summary>Ran 2 commands</summary>
+>
+> - Ran `npm.cmd run build`
+> - Ran `git diff --numstat; rg -n 'navigation-badge|data-portal|@media|desktop-navigation' src/app/globals.css; Get-Content src/shared/ui/workspace-nav.tsx; Get-Content src/features/notifications/read-button.tsx`
+>
+> </details>
+</details>
+
+Implemented numbered badges for:
+
+- Unread Notifications and Inquiry conversations.
+- Requests and Accounts awaiting approval or decline.
+
+Counts update automatically and disappear at zero.
+
+Apply the new [database migration](./supabase/migrations/202611180006_portal_badges.sql) to enable them.
+
+All 259 tests, type checking, lint, and build passed. Authenticated browser testing wasn’t available locally. The build also flagged Next.js for a security upgrade.
+
+> there should be a button in the notifications in patient portal to mark all read
+
+<details><summary>4 previous messages</summary>
+
+> I’ll add a “Mark all as read” button to patient Notifications and make sure it clears unread notifications across every page and updates the badge.
+>
+> <details><summary>Ran 2 commands</summary>
+>
+> - Ran `Get-Content supabase/tests/portal-badges.test.ts; Get-Content src/features/inquiries/read-actions.test.ts; Get-Content src/shared/ui/session-header.tsx; Get-Content src/shared/ui/snackbar.tsx; Get-Content package.json; Get-Content tests/authenticated/workspace.spec.ts -TotalCount 115`
+> - Ran `git status --short; Get-Content src/features/notifications/actions.ts; Get-Content src/features/notifications/read-button.tsx; Get-Content src/app/patient/notifications/page.tsx; Get-Content supabase/migrations/202611180006_portal_badges.sql; Get-Content src/shared/ui/components.tsx; rg --files -g AGENTS.md -g '*notification*' -g '*badge*' -g '!node_modules' -g '!.next' -g '!.next-e2e'`
+>
+> </details>
+>
+> <details><summary>Created 2 files, edited 3 files</summary>
+>
+> - Wrote `./README.md` (+3 -0)
+> - Wrote `./src/app/patient/notifications/page.tsx` (+22 -3)
+> - Wrote `./src/features/notifications/actions.test.ts` (+44 -0)
+> - Wrote `./src/features/notifications/actions.ts` (+11 -0)
+> - Wrote `./src/features/notifications/mark-all-read-button.tsx` (+28 -0)
+>
+> </details>
+>
+> System error
+>
+> You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/settings/usage to purchase more credits or try again at Nov 19th, 2026 4:16 AM.
+</details>

@@ -4,6 +4,21 @@ import { revalidatePath } from "next/cache";
 import { getActor } from "@/server/session";
 import { isStaffRole } from "@/features/accounts/domain/roles";
 import { safeError } from "@/shared/lib/errors";
+export async function markInquiryRead(input: unknown) {
+  try {
+    const p = z.object({ id: z.uuid(), through: z.iso.datetime({ offset: true }) }).parse(input);
+    const actor = await getActor();
+    if (!actor) throw new Error("UNAUTHENTICATED");
+    const { error } = await actor.client.rpc("mark_inquiry_read", { p_inquiry: p.id, p_through: p.through });
+    if (error) throw error;
+    revalidatePath(isStaffRole(actor.role) ? "/admin/inquiries" : "/patient/inquiries");
+    if (actor.role === "patient") revalidatePath("/patient/notifications");
+    return { ok: true, message: "Conversation marked as read." };
+  } catch (error) {
+    return { ok: false, message: safeError(error) };
+  }
+}
+
 export async function replyInquiry(input: unknown) {
   try {
     const p = z.object({ id: z.uuid(), draft: z.uuid().optional(), expected: z.iso.datetime({ offset: true }).optional(), body: z.string().trim().min(1).max(4000), publish: z.boolean(), status: z.enum(["open", "in_progress", "waiting_for_follow_up", "resolved"]), key: z.uuid() }).parse(input);

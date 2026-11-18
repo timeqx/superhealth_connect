@@ -44,7 +44,7 @@ export function StaffAccountTools({ account, currentUserId }: { account: StaffAc
       </DetailDialog>
     </>}
     {account.id !== currentUserId && <DetailDialog title="Delete account" description={`Delete ${account.email || "this account"}? Sign-in access will be removed. Historical activity will be retained. This cannot be undone here.`} label="Delete account">
-      <form onSubmit={e => { e.preventDefault(); void submit("delete", e.currentTarget); }}>
+      <form className="flex flex-col items-start gap-6" onSubmit={e => { e.preventDefault(); void submit("delete", e.currentTarget); }}>
         <label className="checkbox-field"><input type="checkbox" required disabled={pending} /> I confirm that this account should be deleted.</label>
         <Button type="submit" variant="destructive" disabled={pending}>{pending ? "Deleting…" : "Confirm deletion"}</Button>
       </form>

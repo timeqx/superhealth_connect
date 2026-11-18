@@ -9,6 +9,14 @@ async function signIn(page: Page, role: "PATIENT" | "STAFF" | "ADMIN") {
   await expect(page.locator(".site-header")).toHaveCount(1);
   await expect(page.locator(".site-header").getByRole("link", { name: "Sign in", exact: true })).toHaveCount(0);
 }
+
+async function badgeCount(page: Page, href: string) {
+  const link = page.locator('nav[aria-label="Main navigation"]')
+    .locator(`a[href="${href}"]`);
+  await expect(link).toBeVisible();
+  const badge = link.locator(".navigation-badge");
+  return Number((await badge.allTextContents()).join("")) || 0;
+}
 test("patient authorization, inquiry response, notification and full admin workspace", async ({ browser }) => {
   const patientContext = await browser.newContext();
   const staffContext = await browser.newContext();
@@ -22,12 +30,13 @@ test("patient authorization, inquiry response, notification and full admin works
     const deniedExport = await patient.request.get("/admin/reports/export?from=2026-10-01&to=2026-10-21");
     expect(deniedExport.status()).toBe(403);
     await patient.goto("/patient/inquiries");
+    const patientInquiriesBefore = await badgeCount(patient, "/patient/inquiries");
     await patient.getByLabel("Subject", { exact: true }).fill(subject);
     await patient.getByLabel("Message", { exact: true }).fill("Synthetic workflow verification only.");
     await patient.getByRole("button", { name: "Send inquiry", exact: true }).click();
     await expect(patient.getByText(subject, { exact: true })).toBeVisible();
     await signIn(staff, "ADMIN");
-    await expect(staff.getByRole("navigation", { name: "Main navigation" }).getByRole("link")).toHaveText(["Requests", "Queue", "History", "Inquiries", "Accounts", "Staff", "Schedules", "Reports"]);
+    await expect(staff.getByRole("navigation", { name: "Main navigation" }).locator(".navigation-label")).toHaveText(["Requests", "Queue", "History", "Inquiries", "Accounts", "Staff", "Schedules", "Reports"]);
     for (const path of ["/admin/reviews", "/admin/staff", "/admin/schedules", "/admin/reports", "/admin/queue", "/admin/history", "/admin/audit", "/admin/book"]) {
       await staff.goto(path);
       await expect(staff.locator("main h1")).toBeVisible();
@@ -39,34 +48,48 @@ test("patient authorization, inquiry response, notification and full admin works
     expect(await exported.text()).toContain("total_requests");
     expect((await staff.request.get("/admin/reports/export?from=2026-02-30&to=2026-03-01")).status()).toBe(400);
     await staff.goto("/admin/inquiries");
+    const staffInquiriesBefore = await badgeCount(staff, "/admin/inquiries");
+    expect(staffInquiriesBefore).toBeGreaterThan(0);
     await staff.getByRole("button", { name: `View conversation: ${subject}`, exact: true }).click();
     const thread = staff.getByRole("dialog", { name: subject, exact: true });
     await expect(thread.locator('[data-sender="patient"]')).toContainText("Patient");
+    await expect.poll(() => badgeCount(staff, "/admin/inquiries")).toBe(staffInquiriesBefore - 1);
     await thread.getByLabel("Staff response").fill("Synthetic private draft");
     await thread.getByRole("button", { name: "Save private draft" }).click();
     await expect(thread.getByText("Private draft", { exact: false })).toBeVisible();
     await patient.reload();
     await expect(patient.getByText("Synthetic private draft", { exact: false })).toHaveCount(0);
+    await expect.poll(() => badgeCount(patient, "/patient/inquiries")).toBe(patientInquiriesBefore);
     const savedDraft = thread.locator(".conversation-message").filter({ hasText: "Private draft" });
     await savedDraft.getByLabel("Staff response").fill(`Synthetic reply to ${subject}`);
     await savedDraft.getByRole("button", { name: "Send reply", exact: true }).click();
     await expect(thread.getByText(`Synthetic reply to ${subject}`, { exact: true })).toBeVisible();
     await patient.reload();
-    await patient.getByRole("button", { name: `View conversation: ${subject}`, exact: true }).click();
-    await expect(patient.getByRole("dialog").locator('[data-sender="staff"]')).toContainText(`Synthetic reply to ${subject}`);
+    await expect.poll(() => badgeCount(patient, "/patient/inquiries")).toBe(patientInquiriesBefore + 1);
     await patient.goto("/patient/notifications");
+    const notificationsBefore = await badgeCount(patient, "/patient/notifications");
+    expect(notificationsBefore).toBeGreaterThan(0);
     const unread = patient.getByRole("button", { name: "Mark as read", exact: true });
     const before = await unread.count();
     expect(before).toBeGreaterThan(0);
     await unread.first().click();
     await expect(unread).toHaveCount(before - 1);
+    await expect.poll(() => badgeCount(patient, "/patient/notifications")).toBe(notificationsBefore - 1);
+    await expect.poll(() => badgeCount(patient, "/patient/inquiries")).toBe(patientInquiriesBefore + 1);
+    await patient.goto("/patient/inquiries");
+    await patient.getByRole("button", { name: `View conversation: ${subject}`, exact: true }).click();
+    await expect(patient.getByRole("dialog").locator('[data-sender="staff"]')).toContainText(`Synthetic reply to ${subject}`);
+    await expect.poll(() => badgeCount(patient, "/patient/inquiries")).toBe(patientInquiriesBefore);
+    if (patientInquiriesBefore === 0) {
+      await expect(patient.locator('nav[aria-label="Main navigation"] a[href="/patient/inquiries"] .navigation-badge')).toHaveCount(0);
+    }
   } finally { await patientContext.close(); await staffContext.close(); }
 });
 
 test("staff shares the portal but only has Requests, Queue, Inquiries and Reports", async ({ page }) => {
   await signIn(page, "STAFF");
   const links = page.getByRole("navigation", { name: "Main navigation" }).getByRole("link");
-  await expect(links).toHaveText(["Requests", "Queue", "Inquiries", "Reports"]);
+  await expect(links.locator(".navigation-label")).toHaveText(["Requests", "Queue", "Inquiries", "Reports"]);
 
   for (const path of ["/admin", "/admin/queue", "/admin/inquiries", "/admin/reports"]) {
     await page.goto(path);

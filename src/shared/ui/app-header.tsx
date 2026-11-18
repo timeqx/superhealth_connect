@@ -6,6 +6,8 @@ import { HeartPulse, Menu, ArrowUpRight } from "lucide-react";
 import { Button } from "./button";
 import { signOut } from "@/features/accounts/application/auth-actions";
 import { isStaffRole, staffPortalLinks, type UserRole } from "@/features/accounts/domain/roles";
+import { navigationBadge, type PortalBadgeCounts } from "@/features/notifications/portal-badges";
+import { NavigationBadge } from "./navigation-badge";
 import {
   Sheet,
   SheetContent,
@@ -21,10 +23,11 @@ const patientLinks = [
   ["/patient/profile", "Profile"],
   ["/patient/notifications", "Notifications"],
 ];
-export function AppHeader({ role = null, pending = false, unavailable = false }: {
+export function AppHeader({ role = null, pending = false, unavailable = false, counts }: {
   role?: UserRole | null;
   pending?: boolean;
   unavailable?: boolean;
+  counts?: PortalBadgeCounts;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -42,18 +45,21 @@ export function AppHeader({ role = null, pending = false, unavailable = false }:
       {unavailable ? "My account" : "Sign in"} <ArrowUpRight />
     </Link></Button>
   );
-  const items = links.map(([href, label]) => (
-    <Link
+  const items = links.map(([href, label]) => {
+    const badge = navigationBadge(href, counts);
+    return <Link
       key={href}
       href={href}
       aria-current={pathname === href ? "page" : undefined}
+      aria-label={badge ? `${label}, ${badge.count} ${badge.description}` : undefined}
       onClick={() => setOpen(false)}
     >
-      {label}
-    </Link>
-  ));
+      <span className="navigation-label">{label}</span>
+      {badge && <NavigationBadge {...badge} />}
+    </Link>;
+  });
   return (
-    <header className="site-header glass-surface">
+    <header className="site-header glass-surface" data-portal={role ? "true" : undefined}>
       <div className="header-inner">
         <Link className="brand" href={staffHeader ? "/admin" : "/"} aria-label={staffHeader ? "SuperHealth staff workspace" : "SuperHealth Connect home"}>
           <span className="brand-mark">
