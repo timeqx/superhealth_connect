@@ -1,5 +1,5 @@
 import { supabaseConfig } from "@/shared/supabase/config";
-import { requireActor } from "@/server/session";
+import { requireStaffActor } from "@/server/session";
 import { SetupNotice } from "@/shared/ui/components";
 import { LiveUpdates } from "@/features/notifications/live-updates";
 export const dynamic = "force-dynamic";
@@ -9,6 +9,6 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   if (!supabaseConfig()) return <SetupNotice />;
-  const actor = await requireActor(true);
+  const actor = await requireStaffActor();
   return <div className="workspace-body"><LiveUpdates userId={actor.user.id} staff />{children}</div>;
 }

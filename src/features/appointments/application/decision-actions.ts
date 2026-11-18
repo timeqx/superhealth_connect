@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getActor } from "@/server/session";
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { safeError, type ActionResult } from "@/shared/lib/errors";
 import { appointmentDecisionSchema, bulkAppointmentDecisionSchema, type BulkDecisionResult } from "./decision";
 
@@ -15,7 +16,7 @@ export async function decideAppointment(input: unknown): Promise<ActionResult> {
   try {
     const actor = await getActor();
     if (!actor) throw new Error("UNAUTHENTICATED");
-    if (actor.role !== "admin") throw new Error("FORBIDDEN");
+    if (!isStaffRole(actor.role)) throw new Error("FORBIDDEN");
     const p = appointmentDecisionSchema.parse(input);
     const { error } = await actor.client.rpc("change_appointment", {
       p_id: p.id, p_action: p.decision, p_key: p.key,
@@ -36,7 +37,7 @@ export async function bulkDecideAppointments(input: unknown): Promise<BulkDecisi
   try {
     const actor = await getActor();
     if (!actor) throw new Error("UNAUTHENTICATED");
-    if (actor.role !== "admin") throw new Error("FORBIDDEN");
+    if (!isStaffRole(actor.role)) throw new Error("FORBIDDEN");
     const p = bulkAppointmentDecisionSchema.parse(input);
     const results: BulkDecisionResult["results"] = [];
     // Each decision uses the existing database authorization, version check,

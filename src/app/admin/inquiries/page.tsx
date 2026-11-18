@@ -1,12 +1,12 @@
 import { ConversationMessage } from "@/features/inquiries/presentation/conversation-message";
 import { Pagination, pageNumber } from "@/shared/ui/pagination";
-import { requireActor } from "@/server/session";
+import { requireStaffActor } from "@/server/session";
 import { Card, PageTitle } from "@/shared/ui/components";
 import { AppointmentStatusBadge } from "@/shared/ui/care-components";
 import { DetailDialog } from "@/shared/ui/detail-dialog";
 import { InquiryReply } from "@/features/inquiries/presentation/inquiry-reply";
 export default async function StaffInquiries({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const { client } = await requireActor(true);
+  const { client } = await requireStaffActor();
   const page = pageNumber((await searchParams).page);
   const { data, error, count } = await client.from("inquiries").select("id,patient_id,subject,status,inquiry_messages(id,author_id,body,is_draft,created_at,updated_at)", { count: "exact" }).order("created_at", { ascending: false }).order("id").range((page - 1) * 20, page * 20 - 1);
   if (error) throw new Error("Inquiries could not be loaded.");

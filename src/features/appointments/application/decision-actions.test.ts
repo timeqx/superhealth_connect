@@ -28,8 +28,8 @@ describe("staff appointment decisions", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("approves each selected request with its exact timestamp and retry key", async () => {
-    const rpc = setup();
+  it.each(["staff", "admin"])("allows %s to approve selected requests with their timestamps and retry keys", async role => {
+    const rpc = setup(role);
     const result = await bulkDecideAppointments(input);
     expect(result.ok).toBe(true);
     expect(result.results).toEqual(requests.map(({ id }) => ({ id, ok: true, message: "Appointment approved." })));
@@ -104,8 +104,8 @@ describe("staff appointment decisions", () => {
     expect(rpc).toHaveBeenCalledTimes(25);
   });
 
-  it("keeps individual approval available and refreshes the notification view", async () => {
-    const rpc = setup();
+  it.each(["staff", "admin"])("keeps individual approval available to %s and refreshes notifications", async role => {
+    const rpc = setup(role);
     expect((await decideAppointment({ ...requests[0], decision: "approve", reason: "" })).ok).toBe(true);
     expect(rpc).toHaveBeenCalledOnce();
     expect(mocks.revalidate).toHaveBeenCalledWith("/patient/notifications");

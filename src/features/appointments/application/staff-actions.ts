@@ -1,6 +1,7 @@
 "use server";
 import { z } from "zod";
 import { getActor } from "@/server/session";
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { revalidatePath } from "next/cache";
 import { safeError } from "@/shared/lib/errors";
 export async function staffBook(input: unknown) {
@@ -28,7 +29,7 @@ export async function staffAppointmentAction(input: unknown) {
 
 export async function staffAlternatives(id: string) {
   const actor = await getActor();
-  if (!actor || actor.role !== "admin") throw new Error("FORBIDDEN");
+  if (!actor || !isStaffRole(actor.role)) throw new Error("FORBIDDEN");
   const visit = await actor.client.from("appointments").select("slot_id,service_slots!appointments_slot_id_fkey(service_id)").eq("id", z.uuid().parse(id)).single();
   if (visit.error) throw new Error("Could not load this appointment.");
   const slot = visit.data.service_slots as unknown as { service_id: string };

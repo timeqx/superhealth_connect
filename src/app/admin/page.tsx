@@ -1,14 +1,14 @@
-import { requireActor } from "@/server/session";
+import { requireStaffActor } from "@/server/session";
 import Link from "next/link";
 import { PageTitle } from "@/shared/ui/components";
 import { RequestTable, type StaffRequest } from "@/shared/ui/admin-request-panel";
 async function reviewDeadlineCount(hours: number) {
-  const { client } = await requireActor(true);
+  const { client } = await requireStaffActor();
   const cutoff = new Date(Date.now() - hours * 3600000).toISOString();
   return client.from("appointments").select("id", { count: "exact", head: true }).eq("status", "pending").lt("requested_at", cutoff);
 }
 export default async function Admin({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const { client } = await requireActor(true);
+  const { client } = await requireStaffActor();
   const params = await searchParams;
   const page = Math.min(10000, Math.max(1, Number(params.page) || 1)) | 0;
   const hours = Number(process.env.APPOINTMENT_REVIEW_HOURS);
@@ -16,7 +16,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   if (overdue?.error) throw new Error("Review deadlines could not be loaded.");
   const { data, error, count } = await client
     .from("appointments")
-    .select("id,public_reference,status,updated_at,profiles!appointments_patient_id_fkey(first_name,last_name),service_slots!appointments_slot_id_fkey(starts_at,ends_at,services(name))", { count: "exact" })
+    .select("id,patient_id,public_reference,status,updated_at,profiles!appointments_patient_id_fkey(first_name,last_name),service_slots!appointments_slot_id_fkey(starts_at,ends_at,services(name))", { count: "exact" })
     .eq("status", "pending")
     .order("created_at")
     .order("id")
@@ -25,7 +25,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const requests: StaffRequest[] = data.map(row => {
     const profile = row.profiles as unknown as { first_name: string; last_name: string } | null;
     const slot = row.service_slots as unknown as { starts_at: string; ends_at: string; services: { name: string } | null } | null;
-    return { id: row.id, public_reference: row.public_reference, status: row.status, updated_at: row.updated_at,
+    return { id: row.id, patientId: row.patient_id, public_reference: row.public_reference, status: row.status, updated_at: row.updated_at,
       patientName: profile ? `${profile.first_name} ${profile.last_name}` : "Patient details unavailable",
       serviceName: slot?.services?.name, startsAt: slot?.starts_at, endsAt: slot?.ends_at };
   });

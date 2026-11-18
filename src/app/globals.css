@@ -1548,3 +1548,8 @@ input[type="checkbox"] {
   .filter-toolbar > label { flex: 1 1 120px; }
   .filter-toolbar > button { margin-left: auto; }
 }
+
+.patient-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.patient-details-grid dt { font-size: 13px; color: var(--muted-foreground); }
+.patient-details-grid dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+@media (max-width: 500px) { .patient-details-grid { grid-template-columns: minmax(0, 1fr); } }

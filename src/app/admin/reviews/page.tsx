@@ -1,3 +1,4 @@
+import { PatientDetailsDialog } from "@/features/accounts/presentation/patient-details-dialog";
 import { requireActor } from "@/server/session";
 import { Pagination, pageNumber } from "@/shared/ui/pagination";
 import { Card, PageTitle } from "@/shared/ui/components";
@@ -37,6 +38,7 @@ export default async function Reviews({ searchParams }: { searchParams: Promise<
                   : p.barangay_code}
               </p>
             </div>
+            <PatientDetailsDialog patientId={p.id} name={`${p.first_name} ${p.last_name}`} />
             <p className="caption">Submission version {p.review_version}</p>
             {p.current_document_id ? (
               <AdminRequestPanel
@@ -48,6 +50,7 @@ export default async function Reviews({ searchParams }: { searchParams: Promise<
                     Open private document
                   </a>
                 </Button>
+                <PatientDetailsDialog patientId={p.id} name={`${p.first_name} ${p.last_name}`} />
                 <ReviewPanel user={p.id} document={p.current_document_id} />
               </AdminRequestPanel>
             ) : (

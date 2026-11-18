@@ -11,7 +11,9 @@ import { AppointmentDecision } from "@/features/appointments/presentation/appoin
 import { bulkDecideAppointments } from "@/features/appointments/application/decision-actions";
 import { formatDate, formatTime } from "@/shared/lib/time";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "./alert-dialog";
+import { PatientDetailsDialog } from "@/features/accounts/presentation/patient-details-dialog";
 export type StaffRequest = {
+  patientId?: string;
   id: string;
   public_reference: string;
   status: string;
@@ -175,7 +177,7 @@ export function RequestTable({
                   <td className="request-reference-cell">
                     <strong>{r.public_reference}</strong>
                   </td>
-                  <td className="request-patient-cell"><strong>{r.patientName || "Patient"}</strong><p>{r.serviceName || "Service details in review"}</p></td>
+                  <td className="request-patient-cell">{r.patientId ? <PatientDetailsDialog patientId={r.patientId} name={r.patientName} asName /> : <strong>{r.patientName || "Patient"}</strong>}<p>{r.serviceName || "Service details in review"}</p></td>
                   <td className="request-time-cell">{r.startsAt ? <><strong>{formatDate(r.startsAt)}</strong><p>{formatTime(r.startsAt)}{r.endsAt ? `–${formatTime(r.endsAt)}` : ""}</p></> : "See details"}</td>
                   <td className="request-status-cell">
                     <AppointmentStatusBadge status={r.status} />
@@ -189,6 +191,7 @@ export function RequestTable({
                     >
                       <AppointmentStatusBadge status={r.status} />
                       {r.patientName && <div><p className="eyebrow">PATIENT</p><h3>{r.patientName}</h3></div>}
+                      {r.patientId && <PatientDetailsDialog patientId={r.patientId} name={r.patientName} />}
                       {r.serviceName && <div><p className="eyebrow">SERVICE</p><h3>{r.serviceName}</h3></div>}
                       {r.startsAt && <p>{formatDate(r.startsAt)} · {formatTime(r.startsAt)}{r.endsAt ? `–${formatTime(r.endsAt)}` : ""} · Philippine time</p>}
                       <p>

@@ -1,21 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isStaffRole, staffPortalLinks, type UserRole } from "@/features/accounts/domain/roles";
 import {
   CalendarDays,
   LayoutDashboard,
   MessageCircle,
   UserRound,
-  ShieldCheck,
 } from "lucide-react";
-export function WorkspaceNav({ staff = false }: { staff?: boolean }) {
+export function WorkspaceNav({ role = "patient" }: { role?: UserRole }) {
   const path = usePathname();
+  const staff = isStaffRole(role);
   const links = staff
-    ? [
-        { href: "/admin", label: "Appointment requests", Icon: CalendarDays },
-        { href: "/admin/reviews", label: "Account reviews", Icon: ShieldCheck },
-        { href: "/patient", label: "My account", Icon: UserRound },
-      ]
+    ? staffPortalLinks(role).map(link => ({ ...link, Icon: link.href === "/admin/inquiries" ? MessageCircle : LayoutDashboard }))
     : [
         { href: "/patient", label: "Home", Icon: LayoutDashboard },
         {

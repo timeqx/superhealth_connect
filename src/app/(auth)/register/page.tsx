@@ -1,3 +1,4 @@
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { profileSchema } from "@/features/accounts/domain/validation";
 import { RegistrationForm } from "@/features/accounts/presentation/registration-form";
 import { needsRegistration, registrationStep } from "@/features/accounts/domain/registration";
@@ -10,7 +11,7 @@ export default async function Register() {
   const configured = Boolean(supabaseConfig());
   const actor = configured ? await getActor() : null;
   if (actor && (actor.role !== "patient" || !needsRegistration(actor.user.user_metadata)))
-    redirect(actor.role === "admin" ? "/admin" : "/patient");
+    redirect(isStaffRole(actor.role) ? "/admin" : "/patient");
   if (actor?.profile.review_status === "rejected") redirect("/patient/profile");
   const verified = actor && actor.user.email_confirmed_at ? actor : null;
   const needsPassword = Boolean(verified && verified.user.user_metadata.patient_registration_password_set !== true);

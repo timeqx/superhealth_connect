@@ -1,4 +1,5 @@
 "use server";
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { z } from "zod";
 import { serverClient } from "@/shared/supabase/server";
 import { getActor } from "@/server/session";
@@ -70,7 +71,7 @@ export async function resumeRegistration(): Promise<ActionResult> {
     const actor = await getActor();
     if (!actor?.user.email_confirmed_at) return { ok: false, message: "Waiting for email verification." };
     if (actor.role !== "patient" || !needsRegistration(actor.user.user_metadata))
-      return { ok: true, message: "Already registered.", redirectTo: actor.role === "admin" ? "/admin" : "/patient" };
+      return { ok: true, message: "Already registered.", redirectTo: isStaffRole(actor.role) ? "/admin" : "/patient" };
     if (registrationStep(actor.profile) !== 0)
       return { ok: true, message: "Email verified.", redirectTo: "/register" };
     const draft = signupContactSchema.safeParse({ profile: actor.user.user_metadata.registration_draft, email: actor.user.email, consent: true });
@@ -85,7 +86,7 @@ export async function saveRegistrationDetails(input: unknown): Promise<ActionRes
     const actor = await getActor();
     if (!actor || !actor.user.email_confirmed_at) throw new Error("UNAUTHENTICATED");
     if (actor.role !== "patient" || !needsRegistration(actor.user.user_metadata))
-      return { ok: true, message: "This account is already registered.", redirectTo: actor.role === "admin" ? "/admin" : "/patient" };
+      return { ok: true, message: "This account is already registered.", redirectTo: isStaffRole(actor.role) ? "/admin" : "/patient" };
     if (actor.user.email?.toLowerCase() !== value.email) throw new Error("FORBIDDEN");
     if (actor.profile.review_status !== "incomplete" || actor.profile.current_document_id)
       return { ok: true, message: "Continue your registration.", redirectTo: "/register" };

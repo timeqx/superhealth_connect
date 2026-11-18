@@ -10,15 +10,18 @@ function option(name) {
 const userId = option("--user");
 const employeeId = option("--employee");
 const operator = option("--operator");
+const roleSpecified = args.includes("--role");
+const role = roleSpecified ? option("--role") : "staff";
 if (
   !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(userId) ||
   !employeeId.trim() ||
   employeeId.length > 80 ||
   !operator.trim() ||
-  operator.length > 100
+  operator.length > 100 ||
+  !["staff", "admin"].includes(role)
 ) {
   console.error(
-    "Usage: npm run staff:provision -- --user UUID --employee STAFF-ID --operator OPERATOR-NAME [--apply]",
+    "Usage: npm run staff:provision -- --user UUID --employee STAFF-ID --operator OPERATOR-NAME [--role staff|admin] [--apply]",
   );
   process.exit(1);
 }
@@ -41,23 +44,25 @@ try {
   );
   if (!rows.length || !rows[0].email_confirmed_at)
     throw new Error("USER_NOT_READY");
+  if (rows[0].role === "admin" && !roleSpecified)
+    throw new Error("EXPLICIT_ADMIN_ROLE_REQUIRED");
   if (!args.includes("--apply")) {
     await client.query("rollback");
     console.log(
-      "Dry run passed: verified account exists. Add --apply to provision staff on the configured database.",
+      `Dry run passed: verified account exists. Add --apply to provision the ${role} role on the configured database.`,
     );
   } else {
     await client.query(
-      "update public.user_roles set role='admin',employee_id=$2,disabled_at=null,provisioned_at=now(),provisioned_by=$3 where user_id=$1",
-      [userId, employeeId.trim(), operator.trim()],
+      "update public.user_roles set role=$4,employee_id=$2,disabled_at=null,provisioned_at=now(),provisioned_by=$3 where user_id=$1",
+      [userId, employeeId.trim(), operator.trim(), role],
     );
     await client.query(
-      "insert into public.audit_logs(action,entity_type,entity_id,metadata) values('provision_staff','user_role',$1,jsonb_build_object('operator',$2::text,'previous_role',$3::text,'previously_disabled',$4::boolean))",
-      [userId, operator.trim(), rows[0].role, Boolean(rows[0].disabled_at)],
+      "insert into public.audit_logs(action,entity_type,entity_id,metadata) values('provision_staff','user_role',$1,jsonb_build_object('operator',$2::text,'previous_role',$3::text,'previously_disabled',$4::boolean,'role',$5::text))",
+      [userId, operator.trim(), rows[0].role, Boolean(rows[0].disabled_at), role],
     );
     await client.query("commit");
     console.log(
-      "Staff role provisioned and audited. Sign in through the normal sign-in page.",
+      `${role === "admin" ? "Admin" : "Staff"} role provisioned and audited. Sign in at /staff/sign-in.`,
     );
   }
 } catch (error) {
@@ -76,6 +81,8 @@ try {
   };
   const message = error.message === "USER_NOT_READY"
     ? "The account does not exist in user_roles or its email is unverified. Confirm the account and foundation migration."
+    : error.message === "EXPLICIT_ADMIN_ROLE_REQUIRED"
+      ? "This account already has admin access. Pass --role admin to retain it, or --role staff to explicitly reduce its access."
     : guidance[error.code] ?? (/timeout/i.test(error.message ?? "")
       ? "Connection timed out. Check database endpoint, network reachability and project availability."
       : "Check the operator connection, database schema and permissions. Sensitive error details were withheld.");

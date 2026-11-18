@@ -20,7 +20,7 @@ async function request(key: string) {
 beforeAll(async () => {
   await db.exec("create publication supabase_realtime;");
   await db.exec(
-    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`,
+    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email_confirmed_at timestamptz,email text,raw_app_meta_data jsonb default '{}',raw_user_meta_data jsonb default '{}');create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to anon,authenticated;grant execute on function auth.uid() to anon,authenticated;`,
   );
   for (const name of [
     "202610200001_foundation.sql",
@@ -29,6 +29,8 @@ beforeAll(async () => {
     "20261021064654_staff_management.sql",
     "202610300002_recurring_schedules.sql",
     "202611160001_appointment_time_slots.sql",
+    "202611180001_staff_roles.sql",
+    "202611180002_staff_account_management.sql",
   ])
     await db.exec(readFileSync(`supabase/migrations/${name}`, "utf8"));
   await db.exec(

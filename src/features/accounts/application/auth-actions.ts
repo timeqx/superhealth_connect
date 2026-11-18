@@ -5,6 +5,7 @@ import type { ActionResult } from "@/shared/lib/errors";
 import { safeError } from "@/shared/lib/errors";
 import { redirect } from "next/navigation";
 import { needsRegistration } from "../domain/registration";
+import { isStaffRole, isUserRole } from "../domain/roles";
 export async function authenticate(
   mode: string,
   input: { email: string; password: string; consent: boolean },
@@ -50,11 +51,11 @@ export async function authenticate(
             "The password could not be updated. Request a new reset link.",
         };
       const { data: role } = await client.from("user_roles").select("role,disabled_at").eq("user_id", user.id).single();
-      if (!role || role.disabled_at) {
+      if (!role || role.disabled_at || !isUserRole(role.role)) {
         await client.auth.signOut({ scope: "local" });
         return { ok: false, message: "Password updated, but account access could not be confirmed. Contact the project operator." };
       }
-      return { ok: true, message: "Password updated.", redirectTo: role.role === "admin" ? "/admin" : needsRegistration(user.user_metadata) ? "/register" : "/patient" };
+      return { ok: true, message: "Password updated.", redirectTo: isStaffRole(role.role) ? "/admin" : needsRegistration(user.user_metadata) ? "/register" : "/patient" };
     }
     const parsed = credentialsSchema.safeParse(input);
     if (!parsed.success)
@@ -71,7 +72,7 @@ export async function authenticate(
       .select("role,disabled_at")
       .eq("user_id", data.user.id)
       .single();
-    if (roleError || !role || role.disabled_at) {
+    if (roleError || !role || role.disabled_at || !isUserRole(role.role)) {
       await client.auth.signOut();
       return {
         ok: false,
@@ -79,7 +80,7 @@ export async function authenticate(
           "Account access could not be confirmed. Please contact the project operator.",
       };
     }
-    if (role.role !== (portal === "staff" ? "admin" : "patient")) {
+    if (portal === "staff" ? !isStaffRole(role.role) : role.role !== "patient") {
       await client.auth.signOut({ scope: "local" });
       return {
         ok: false,
@@ -91,7 +92,7 @@ export async function authenticate(
     return {
       ok: true,
       message: "Signed in.",
-      redirectTo: role.role === "admin" ? "/admin" : needsRegistration(data.user.user_metadata) ? "/register" : "/patient",
+      redirectTo: isStaffRole(role.role) ? "/admin" : needsRegistration(data.user.user_metadata) ? "/register" : "/patient",
     };
   } catch (error) {
     return { ok: false, message: safeError(error) };
@@ -103,5 +104,5 @@ export async function signOut() {
   const role = user ? (await client.from("user_roles").select("role").eq("user_id", user.id).single()).data?.role : null;
   const { error } = await client.auth.signOut();
   if (error) throw new Error("Sign out failed. Please try again.");
-  redirect(role === "admin" ? "/staff/sign-in" : "/sign-in");
+  redirect(isStaffRole(role) ? "/staff/sign-in" : "/sign-in");
 }

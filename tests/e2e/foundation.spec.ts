@@ -24,6 +24,9 @@ test("account review routes cannot become demo access", async ({
   page,
   request,
 }) => {
+  await page.goto("/admin/staff");
+  await expect(page.getByRole("heading", { name: "Online accounts are temporarily unavailable" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create account", exact: true })).toHaveCount(0);
   await page.goto("/admin/reviews");
   await expect(
     page.getByRole("heading", {

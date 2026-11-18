@@ -1,14 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
-async function signIn(page: Page, role: "PATIENT" | "STAFF") {
-  await page.goto("/sign-in");
+import { randomUUID } from "node:crypto";
+async function signIn(page: Page, role: "PATIENT" | "STAFF" | "ADMIN") {
+  await page.goto(role === "PATIENT" ? "/sign-in" : "/staff/sign-in");
   await page.getByLabel("Email address").fill(process.env[`E2E_${role}_EMAIL`]!);
   await page.getByLabel("Password", { exact: true }).fill(process.env[`E2E_${role}_PASSWORD`]!);
   await page.locator("main").getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(role === "STAFF" ? /\/admin$/ : /\/patient$/);
+  await expect(page).toHaveURL(role === "PATIENT" ? /\/patient$/ : /\/admin$/);
   await expect(page.locator(".site-header")).toHaveCount(1);
   await expect(page.locator(".site-header").getByRole("link", { name: "Sign in", exact: true })).toHaveCount(0);
 }
-test("patient authorization, inquiry response, notification and staff workspace", async ({ browser }) => {
+test("patient authorization, inquiry response, notification and full admin workspace", async ({ browser }) => {
   const patientContext = await browser.newContext();
   const staffContext = await browser.newContext();
   const patient = await patientContext.newPage();
@@ -25,8 +26,9 @@ test("patient authorization, inquiry response, notification and staff workspace"
     await patient.getByLabel("Message", { exact: true }).fill("Synthetic workflow verification only.");
     await patient.getByRole("button", { name: "Send inquiry", exact: true }).click();
     await expect(patient.getByText(subject, { exact: true })).toBeVisible();
-    await signIn(staff, "STAFF");
-    for (const path of ["/admin/schedules", "/admin/reports", "/admin/queue", "/admin/history", "/admin/audit", "/admin/book"]) {
+    await signIn(staff, "ADMIN");
+    await expect(staff.getByRole("navigation", { name: "Main navigation" }).getByRole("link")).toHaveText(["Requests", "Queue", "History", "Inquiries", "Accounts", "Staff", "Schedules", "Reports"]);
+    for (const path of ["/admin/reviews", "/admin/staff", "/admin/schedules", "/admin/reports", "/admin/queue", "/admin/history", "/admin/audit", "/admin/book"]) {
       await staff.goto(path);
       await expect(staff.locator("main h1")).toBeVisible();
       await expect(staff.getByText("Something went wrong", { exact: false })).toHaveCount(0);
@@ -59,4 +61,74 @@ test("patient authorization, inquiry response, notification and staff workspace"
     await unread.first().click();
     await expect(unread).toHaveCount(before - 1);
   } finally { await patientContext.close(); await staffContext.close(); }
+});
+
+test("staff shares the portal but only has Requests, Queue, Inquiries and Reports", async ({ page }) => {
+  await signIn(page, "STAFF");
+  const links = page.getByRole("navigation", { name: "Main navigation" }).getByRole("link");
+  await expect(links).toHaveText(["Requests", "Queue", "Inquiries", "Reports"]);
+
+  for (const path of ["/admin", "/admin/queue", "/admin/inquiries", "/admin/reports"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.getByText("Something went wrong", { exact: false })).toHaveCount(0);
+  }
+  await expect(page.getByRole("link", { name: /Browse all audit activity/ })).toHaveCount(0);
+  const exported = await page.request.get("/admin/reports/export?from=2026-10-01&to=2026-10-21");
+  expect(exported.status()).toBe(200);
+  expect(await exported.text()).toContain("total_requests");
+
+  for (const path of ["/admin/reviews", "/admin/staff", "/admin/schedules", "/admin/history", "/admin/audit", "/admin/book"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/access-denied$/);
+  }
+  const document = await page.request.get("/admin/reviews/document/70000000-0000-4000-8000-000000000001");
+  expect(document.status()).toBe(403);
+  await page.goto("/patient");
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page).toHaveURL(/\/staff\/sign-in$/);
+});
+
+test("admins create ready-to-use staff and admin accounts and change existing session access", async ({ page, browser }) => {
+  test.skip(!process.env.E2E_SUPABASE_SECRET_KEY, "Provide the isolated local Auth admin key to test account creation.");
+  const accountContext = await browser.newContext();
+  const accountPage = await accountContext.newPage();
+  const password = `Synthetic-${randomUUID()}`;
+  const emails = { staff: `staff-${randomUUID()}@example.test`, admin: `admin-${randomUUID()}@example.test` };
+  try {
+    await signIn(page, "ADMIN");
+    await page.goto("/admin/staff");
+    for (const role of ["staff", "admin"] as const) {
+      await page.getByLabel("First name", { exact: true }).fill("Synthetic");
+      await page.getByLabel("Last name", { exact: true }).fill(role);
+      await page.getByLabel("Email address", { exact: true }).fill(emails[role]);
+      await page.getByLabel("Password", { exact: true }).fill(password);
+      await page.getByLabel("Role", { exact: true }).selectOption(role);
+      await page.getByRole("button", { name: "Create account", exact: true }).click();
+      await expect(page.locator(".snackbar")).toContainText("account created");
+      await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
+      await expect(page.getByRole("form", { name: `Role for ${emails[role]}`, exact: true })).toBeVisible();
+
+      await accountPage.goto("/staff/sign-in");
+      await accountPage.getByLabel("Email address").fill(emails[role]);
+      await accountPage.getByLabel("Password", { exact: true }).fill(password);
+      await accountPage.locator("main").getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(accountPage).toHaveURL(/\/admin$/);
+      const navigation = accountPage.getByRole("navigation", { name: "Main navigation" });
+      await expect(navigation.getByRole("link", { name: "Staff", exact: true })).toHaveCount(role === "admin" ? 1 : 0);
+      const row = page.getByRole("form", { name: `Role for ${emails[role]}`, exact: true });
+      const nextRole = role === "staff" ? "admin" : "staff";
+      await row.getByLabel("Account role").selectOption(nextRole);
+      await row.getByRole("button", { name: "Save role", exact: true }).click();
+      await expect(page.locator(".snackbar")).toContainText(`Role changed to ${nextRole === "admin" ? "Admin" : "Staff"}`);
+      await accountPage.goto("/admin/staff");
+      await expect(accountPage).toHaveURL(nextRole === "admin" ? /\/admin\/staff$/ : /\/access-denied$/);
+      await accountPage.getByRole("button", { name: "Sign out", exact: true }).click();
+      await expect(accountPage).toHaveURL(/\/staff\/sign-in$/);
+    }
+  } finally {
+    await accountContext.close();
+  }
 });

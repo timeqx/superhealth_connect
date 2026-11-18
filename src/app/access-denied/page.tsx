@@ -4,9 +4,9 @@ export default function Denied() {
     <>
       <PageTitle
         eyebrow="ACCESS"
-        title="This workspace is for authorized staff"
+        title="You do not have access to this page"
       >
-        Your account does not have staff access.
+        This page is not available for your account role.
       </PageTitle>
       <ButtonLink href="/patient">Return to your account</ButtonLink>
     </>

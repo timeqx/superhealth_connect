@@ -2,6 +2,77 @@
 
 ## Staff workspace
 
+Patients, staff, and admins have separate roles. Staff and admins use the same
+`/staff/sign-in` page and `/admin` portal, with these permissions:
+
+| Role | Available staff-portal tabs |
+| --- | --- |
+| `staff` | Requests, Queue, Inquiries, Reports |
+| `admin` | Every tab, including History, Accounts, Staff, and Schedules |
+
+The staff role can approve or decline requests, operate queues, manage inquiry
+replies and drafts, and view or export reports. Account approval and verification
+documents, service and schedule management, booking on behalf of patients,
+appointment-history actions, and audit browsing require an admin. Direct page
+requests, server actions, and database permissions enforce the same role split.
+
+Apply `202611180001_staff_roles.sql` after all preceding migrations before
+deploying these pages. Existing staff-portal accounts already have the `admin`
+role and keep all their access. Patient permissions are unchanged.
+
+## Staff account management
+
+The admin-only **Staff** tab at `/admin/staff` creates staff and admin accounts and
+manages their roles. Enter a first and last name, email address, password of at
+least 12 characters, optional employee ID, and either Staff or Admin. New accounts
+are ready to sign in at `/staff/sign-in` immediately. No invitation or confirmation
+email is sent. Give the account holder their email and password directly; the form
+clears the password after successful creation.
+
+Staff receives Requests, Queue, Inquiries, and Reports. Admin receives every portal
+tab. The account list shows both roles and allows changes between them for active
+accounts. It does not convert patient accounts, reactivate disabled accounts, or
+reset existing passwords. Duplicate email addresses do not overwrite an existing
+account. After an interrupted create request, refresh the list before retrying to
+check whether the account was created.
+
+The database rejects stale role edits and prevents removing the last active admin.
+An admin may change their own role to Staff when another active admin remains;
+they return to Requests and lose access to the Staff tab. New requests use the
+current database role, so an existing session does not preserve old admin access.
+Account creation and role changes record the acting admin and selected roles in
+the audit log, without passwords.
+
+Apply `202611180002_staff_account_management.sql` after all earlier migrations and
+configure `SUPABASE_SECRET_KEY` on the application server. Account creation uses
+the server-only Supabase Auth Admin API with email confirmation supplied by the
+admin. The migration provisions the profile, role, and audit entry inside the Auth
+creation transaction using trusted application metadata and rechecks the creating
+admin's access. Patient signup and email verification retain their existing flow.
+Listing accounts and changing roles use protected RPCs with the signed-in admin's
+session and do not need the secret key. Never expose that key in browser code.
+
+References: [Supabase admin account creation](https://supabase.com/docs/reference/javascript/auth-admin-createuser)
+and [trusted application metadata](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+## Operator provisioning
+
+Use the operator command to bootstrap the first admin or recover access when the
+portal cannot be used. The command defaults new provisions to `staff`:
+
+```sh
+npm run staff:provision -- --user USER-UUID --employee STAFF-001 --operator OPERATOR
+npm run staff:provision -- --user USER-UUID --employee ADMIN-001 --operator OPERATOR --role admin
+```
+
+Both commands are dry runs until `--apply` is added. They require a confirmed
+account and the server-only `STAFF_DATABASE_URL` operator connection. Updating an
+existing admin requires an explicit `--role admin` to retain access or
+`--role staff` to reduce it. Successful changes record the previous and selected
+role in the audit log.
+
+## Admin services and schedules
+
 `/admin/schedules` supports service creation with available weekdays, opening/closing
 times, session duration in minutes and patient slots per session. All times are Manila
 local times. A service open 8 AM–4 PM with 60-minute sessions and capacity 6 offers eight
@@ -20,12 +91,12 @@ an extra submit step. All dates restores all upcoming dates. Adjacent dates are 
 for faster navigation. Expand a summary
 to view and edit individual sessions. Pagination keeps each daily group together.
 
-New services stay unpublished until staff enables publication and online booking.
+New services stay unpublished until an admin enables publication and online booking.
 Regular hours generate complete intervals over the next 30 days, including today's
 remaining times. Session duration must fit inside opening hours. A leftover interval
 shorter than the session duration is not offered. No selected weekdays disables
 automatic generation. Existing services keep their previous full-day configuration until
-staff saves a new session duration and capacity. For an existing full-day service,
+an admin saves a new session duration and capacity. For an existing full-day service,
 set opening time to 08:00, closing time to 16:00, duration to 60 and capacity to 6,
 then save the session schedule. This requires migration
 `202611160001_appointment_time_slots.sql` and its predecessors.
@@ -40,15 +111,18 @@ stale timestamps and support retry-safe saves. Publication, booking availability
 requirements and arrival settings currently use last-write-wins.
 Only publish policies approved by center staff. Seed values are not approved policies.
 
-`/admin/reports` provides exact counts by current status for requests submitted
-within an inclusive Manila date range (maximum 93 days). The denominator includes
+## Reports
+
+`/admin/reports` is available to staff and admins and provides exact counts by
+current status for requests submitted within an inclusive Manila date range
+(maximum 93 days). The denominator includes
 all statuses. This is a request-cohort report, not visits performed during that
-period. The latest 30 audit actions are shown separately without record metadata.
+period. Admins also see the latest 30 audit actions separately without record metadata.
 Decision, waiting and service-duration averages are available after the staff-management
 migration, with sample counts and exclusions. Reports can export request-outcome
 counts as CSV for the selected dates; duration metrics are not included in that
-export. `/admin/audit` provides paginated exact-action filtering without sensitive
-metadata. Both routes enforce staff access independently.
+export. `/admin/audit` is admin-only and provides paginated exact-action filtering
+without sensitive metadata. Both routes enforce their role requirements independently.
 
 ## Private updates
 
@@ -76,9 +150,10 @@ on their dashboard and appointment list after approval, plus an appointment noti
 Check-in is available only after approval. Bulk decisions use the existing appointment
 database functions and do not require an additional migration.
 
-`/admin/history` supports status/reference filtering, cancellation and no-show
-decisions with reasons. `/admin/book` creates pending requests on behalf of approved
-patients. Staff must confirm identity, consent and applicable policy before acting.
+Admins can use `/admin/history` for status/reference filtering, cancellation and
+no-show decisions with reasons. The admin-only `/admin/book` creates pending
+requests on behalf of approved patients. Admins must confirm identity, consent
+and applicable policy before acting.
 The request dashboard can flag requests older than `APPOINTMENT_REVIEW_HOURS`;
 leave this unset until the center approves a deadline.
 
@@ -123,8 +198,10 @@ Reference: [Resend send-email API](https://resend.com/docs/api-reference/emails/
 ## Authenticated browser verification
 
 Use a disposable **local** Supabase with repository migrations applied through the
-normal local setup workflow. Provision two synthetic, email-confirmed accounts:
-an approved patient with a complete synthetic profile and an active staff member.
+normal local setup workflow. Provision three synthetic, email-confirmed accounts:
+an approved patient with a complete synthetic profile, an active `staff` account,
+and an active `admin` account. Assign the staff and admin roles explicitly using
+the operator provisioning command.
 Never point this runner at hosted or pilot data. No automatic migration/reset or
 privileged provisioning is performed by these tests.
 
@@ -137,13 +214,20 @@ E2E_PATIENT_EMAIL=<synthetic patient>
 E2E_PATIENT_PASSWORD=<test password>
 E2E_STAFF_EMAIL=<synthetic staff>
 E2E_STAFF_PASSWORD=<test password>
+E2E_ADMIN_EMAIL=<synthetic admin>
+E2E_ADMIN_PASSWORD=<test password>
+E2E_SUPABASE_SECRET_KEY=<isolated local Auth admin key, optional for account-creation tests>
 ```
 
 Run `npm run test:e2e:auth`. It starts a separate app on port 3101, refuses a
 non-loopback database endpoint and exercises real sign-in, patient staff-page
-denial, the single account header, staff schedules/reports/queue reads, inquiry
-draft isolation, published replies and notification acknowledgement. It leaves
-synthetic inquiries in the disposable database; reset that database only through
+denial, staff navigation and admin-page denial, the single account header,
+admin schedules/reports/queue reads, inquiry
+draft isolation, published replies and notification acknowledgement. With
+`E2E_SUPABASE_SECRET_KEY`, it also creates synthetic staff/admin accounts, checks
+immediate sign-in without email confirmation, and verifies that role changes alter
+access for existing sessions. It leaves synthetic accounts and inquiries in the
+disposable database; reset that database only through
 your local test lifecycle. Traces/screenshots/video are disabled to avoid storing
 credentials. Do not run simultaneously with the public E2E server (shared build
 directory). Appointment, upload/review, email, reconnect and multi-connection race

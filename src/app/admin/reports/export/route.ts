@@ -1,3 +1,4 @@
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { getActor } from "@/server/session";
 import { reportRange } from "@/features/operations/report-range";
 export async function GET(request: Request) {
@@ -5,7 +6,7 @@ export async function GET(request: Request) {
   try {
     const actor = await getActor();
     if (!actor) return new Response("Sign in to export reports.", { status: 401, headers });
-    if (actor.role !== "admin") return new Response("Staff access required.", { status: 403, headers });
+    if (!isStaffRole(actor.role)) return new Response("Staff access required.", { status: 403, headers });
     const params = new URL(request.url).searchParams;
     const from = params.get("from") ?? "", to = params.get("to") ?? "";
     const range = reportRange(from, to);

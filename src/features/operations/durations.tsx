@@ -1,8 +1,8 @@
-import { requireActor } from "@/server/session";
+import { requireStaffActor } from "@/server/session";
 import { Card } from "@/shared/ui/components";
 type Durations = { decisions: { cohort: number; samples: number; minutes: number | null }; queue: { cohort: number; wait_samples: number; wait_minutes: number | null; service_samples: number; service_minutes: number | null } };
 export async function DurationReport({ start, end }: { start: string; end: string }) {
-  const { client } = await requireActor(true);
+  const { client } = await requireStaffActor();
   const { data, error } = await client.rpc("operational_durations", { p_start: start, p_end: end });
   if (error) return <Card><h2>Duration metrics unavailable</h2><p>Please refresh the page or try again later.</p></Card>;
   const value = data as Durations;

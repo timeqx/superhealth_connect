@@ -1,10 +1,11 @@
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { requireActor } from "@/server/session";
 import { ProfileForm } from "@/features/accounts/presentation/profile-form";
 import { Badge, Card, PageTitle } from "@/shared/ui/components";
 import { VerificationUpload } from "@/features/accounts/presentation/verification-upload";
 export default async function ProfilePage() {
   const { profile, role } = await requireActor();
-  if (role === "admin")
+  if (isStaffRole(role))
     return (
       <Card>
         <h1>Staff account</h1>

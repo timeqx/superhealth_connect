@@ -57,8 +57,8 @@ describe("service schedule actions", () => {
     expect(mocks.revalidate).toHaveBeenCalledWith("/admin/book");
   });
 
-  it("denies patient callers and leaves failed saves unacknowledged", async () => {
-    const rpc = setup("patient");
+  it.each(["patient", "staff"])("denies %s callers and leaves failed saves unacknowledged", async role => {
+    const rpc = setup(role);
     expect((await saveDefinition({ ...definition, ...schedule })).ok).toBe(false);
     expect((await saveServiceSchedule({ service: id, expected, key, ...schedule })).ok).toBe(false);
     expect(rpc).not.toHaveBeenCalled();

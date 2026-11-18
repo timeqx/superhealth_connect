@@ -64,7 +64,7 @@ async function daySlots(service: string, offset: number) {
 beforeAll(async () => {
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create schema auth;
-    create table auth.users(id uuid primary key,email_confirmed_at timestamptz);
+    create table auth.users(id uuid primary key,email_confirmed_at timestamptz,email text,raw_app_meta_data jsonb default '{}',raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth to anon,authenticated;
     grant execute on function auth.uid() to anon,authenticated;
@@ -84,6 +84,8 @@ beforeAll(async () => {
     values($1,$2,((now() at time zone 'Asia/Manila')::date+1+time '08:00') at time zone 'Asia/Manila',
     ((now() at time zone 'Asia/Manila')::date+1+time '17:00') at time zone 'Asia/Manila',10,(now() at time zone 'Asia/Manila')::date+1)`, [legacySlot, legacyService]);
   await db.exec(readFileSync("supabase/migrations/202611160001_appointment_time_slots.sql", "utf8"));
+  await db.exec(readFileSync("supabase/migrations/202611180001_staff_roles.sql", "utf8"));
+  await db.exec(readFileSync("supabase/migrations/202611180002_staff_account_management.sql", "utf8"));
 });
 
 afterAll(async () => db.close());

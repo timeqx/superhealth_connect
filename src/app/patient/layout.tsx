@@ -1,3 +1,4 @@
+import { isStaffRole } from "@/features/accounts/domain/roles";
 import { supabaseConfig } from "@/shared/supabase/config";
 import { requireActor } from "@/server/session";
 import { SetupNotice } from "@/shared/ui/components";
@@ -12,7 +13,7 @@ export default async function PatientLayout({
 }) {
   if (!supabaseConfig()) return <SetupNotice />;
   const actor = await requireActor();
-  if (actor.role === "admin") redirect("/admin");
+  if (isStaffRole(actor.role)) redirect("/admin");
   if (actor.role === "patient" && actor.profile.review_status !== "rejected" && needsRegistration(actor.user.user_metadata)) redirect("/register");
   return <><LiveUpdates userId={actor.user.id} />{children}</>;
 }
