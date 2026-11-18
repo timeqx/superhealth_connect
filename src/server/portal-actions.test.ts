@@ -60,10 +60,19 @@ describe("shared staff portal actions", () => {
   it.each(["staff", "patient", null])("denies %s access to booking and appointment-history management", async role => {
     const { rpc } = setup(role);
     expect((await staffBook({ patient: id, slot: id, reason: "Patient requested assistance", key })).ok).toBe(false);
-    for (const action of ["cancel", "no_show"]) {
+    for (const action of (role === "staff" ? ["no_show"] : ["cancel", "no_show"])) {
       expect((await staffAppointmentAction({ id, key, expected, action, reason: "Patient unavailable" })).ok).toBe(false);
     }
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each(["staff", "admin"])("allows %s to cancel with a required patient-visible reason", async role => {
+    const { rpc } = setup(role);
+    expect((await staffAppointmentAction({ id, key, expected, action: "cancel", reason: "  " })).ok).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
+    expect((await staffAppointmentAction({ id, key, expected, action: "cancel", reason: " Staff emergency " })).ok).toBe(true);
+    expect(rpc).toHaveBeenCalledWith("change_appointment", { p_id: id, p_key: key, p_expected: expected, p_action: "cancel", p_reason: "Staff emergency" });
+    expect(mocks.revalidate).toHaveBeenCalledWith("/patient/notifications");
   });
 
   it("retains admin booking and appointment-history management", async () => {

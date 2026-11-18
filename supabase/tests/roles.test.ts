@@ -100,6 +100,24 @@ describe("patient, staff and admin database authorization", () => {
     expect((await db.query("select id from public.notifications where entity_id=any($1)", [[approved.id, declined.id]])).rows).toHaveLength(4);
   });
 
+  it("lets staff cancel approved visits with a reason, concurrency checks and replay", async () => {
+    const appointment = await request();
+    await actor(staff);
+    const approved = (await db.query<{ value: Appointment }>("select public.change_appointment($1,'approve',$2,$3) as value", [appointment.id, randomUUID(), appointment.updated_at])).rows[0].value;
+    await expect(db.query("select public.change_appointment($1,'cancel',$2,$3,'   ')", [approved.id, randomUUID(), approved.updated_at])).rejects.toThrow("VALIDATION_ERROR");
+    await expect(db.query("select public.change_appointment($1,'cancel',$2,$3,'Staff emergency')", [approved.id, randomUUID(), appointment.updated_at])).rejects.toThrow("CONFLICT");
+    await actor(other);
+    await expect(db.query("select public.change_appointment($1,'cancel',$2,$3,'Staff emergency')", [approved.id, randomUUID(), approved.updated_at])).rejects.toThrow("FORBIDDEN");
+    await actor(staff);
+    const args = [approved.id, randomUUID(), approved.updated_at];
+    const sql = "select public.change_appointment($1,'cancel',$2,$3,'Staff emergency') as value";
+    for (let i = 0; i < 2; i++) expect((await db.query<{ value: Appointment }>(sql, args)).rows[0].value).toMatchObject({ status: "cancelled", decision_reason: "Staff emergency" });
+    await db.exec("reset role");
+    expect((await db.query("select actor_id,reason from public.appointment_events where appointment_id=$1 and action='cancel'", [approved.id])).rows).toEqual([{ actor_id: staff, reason: "Staff emergency" }]);
+    await actor(patient);
+    expect((await db.query("select id from public.notifications where entity_id=$1 and type='appointment_cancel'", [approved.id])).rows).toHaveLength(1);
+  });
+
   it("lets staff check in patients, advance queues and read operational reports", async () => {
     const appointment = await request();
     await actor(staff);

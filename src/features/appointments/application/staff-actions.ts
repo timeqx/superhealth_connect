@@ -19,10 +19,10 @@ export async function staffAppointmentAction(input: unknown) {
   try {
     const p = z.object({ id: z.uuid(), expected: z.iso.datetime({ offset: true }), action: z.enum(["cancel", "no_show"]), reason: z.string().trim().min(1, "Explain the reason for this change.").max(1000), key: z.uuid() }).parse(input);
     const actor = await getActor();
-    if (!actor || actor.role !== "admin") throw new Error("FORBIDDEN");
+    if (!actor || !isStaffRole(actor.role) || (p.action === "no_show" && actor.role !== "admin")) throw new Error("FORBIDDEN");
     const { error } = await actor.client.rpc("change_appointment", { p_id: p.id, p_expected: p.expected, p_action: p.action, p_reason: p.reason, p_key: p.key });
     if (error) throw error;
-    for (const path of ["/admin", "/admin/history", "/admin/queue", "/patient", "/patient/appointments"]) revalidatePath(path);
+    for (const path of ["/admin", "/admin/history", "/admin/queue", "/patient", "/patient/appointments", "/patient/notifications"]) revalidatePath(path);
     return { ok: true, message: "Appointment updated. The patient will see the reason." };
   } catch (error) { return { ok: false, message: error instanceof z.ZodError ? error.issues[0].message : safeError(error) }; }
 }

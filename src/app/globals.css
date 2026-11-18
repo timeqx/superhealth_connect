@@ -1553,3 +1553,7 @@ input[type="checkbox"] {
 .patient-details-grid dt { font-size: 13px; color: var(--muted-foreground); }
 .patient-details-grid dd { margin: 4px 0 0; overflow-wrap: anywhere; }
 @media (max-width: 500px) { .patient-details-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.queue-date-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.queue-date-filter .date-field { width: 158px; }
+.queue-date-filter .date-field input { min-height: 36px; height: 36px; padding-top: 6px; padding-bottom: 6px; }
