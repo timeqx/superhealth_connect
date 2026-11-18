@@ -11,7 +11,8 @@ export function MarkAllReadButton({ unreadCount }: { unreadCount: number }) {
   const notify = useSnackbar();
   const [pending, startTransition] = useTransition();
 
-  return <div className="actions">
+  return <div className="notification-read-actions">
+    <span className="caption">{unreadCount === 0 ? "No unread notifications." : "Applies to all notification pages."}</span>
     <Button variant="outline" disabled={pending || unreadCount === 0} onClick={() => startTransition(async () => {
       try {
         const result = await readAllNotifications();
@@ -23,6 +24,5 @@ export function MarkAllReadButton({ unreadCount }: { unreadCount: number }) {
     })}>
       {pending ? "Marking all as read…" : "Mark all as read"}
     </Button>
-    <span className="caption">{unreadCount === 0 ? "No unread notifications." : "Applies to all notification pages."}</span>
   </div>;
 }

@@ -385,6 +385,34 @@ small,
 .page-title > p:last-child {
   max-width: 680px;
 }
+.page-title-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  min-width: 0;
+}
+.page-title-summary > p {
+  flex: 1 1 320px;
+  min-width: 0;
+  max-width: 680px;
+}
+.notification-read-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  max-width: 100%;
+  margin-left: auto;
+}
+.notification-read-actions .caption {
+  min-width: 0;
+  text-align: right;
+}
+.notification-read-actions > button {
+  flex-shrink: 0;
+}
 .grid-three {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

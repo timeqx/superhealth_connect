@@ -34,16 +34,21 @@ export function PageTitle({
   eyebrow,
   title,
   children,
+  actions,
 }: {
   eyebrow: string;
   title: string;
   children?: ReactNode;
+  actions?: ReactNode;
 }) {
   return (
     <header className="page-title">
       <p className="eyebrow">{eyebrow}</p>
       <h1>{title}</h1>
-      {children && <p>{children}</p>}
+      {actions ? <div className="page-title-summary">
+        {children && <p>{children}</p>}
+        {actions}
+      </div> : children && <p>{children}</p>}
     </header>
   );
 }

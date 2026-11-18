@@ -22,9 +22,8 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
   ]);
   if (error || unread.error || unread.count === null) throw new Error("Notifications could not be loaded.");
   return <>
-    <PageTitle eyebrow="YOUR ACCOUNT" title="Notifications">Updates about your visits, inquiries, and account.</PageTitle>
+    <PageTitle eyebrow="YOUR ACCOUNT" title="Notifications" actions={<MarkAllReadButton unreadCount={unread.count} />}>Updates about your visits, inquiries, and account.</PageTitle>
     <div className="stack">
-      <MarkAllReadButton unreadCount={unread.count} />
       {data.map(n => <Card key={n.id}>
         <span className="eyebrow">{n.read_at ? "Read" : "New"}</span>
         <h2>{appointmentUpdates[n.type]?.title ?? n.type.replaceAll("_", " ")}</h2>
